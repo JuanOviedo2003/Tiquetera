@@ -1,0 +1,21 @@
+{
+  "name": "@tiquetera/backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@carlos-rivera.github.com:JuanOviedo2003/Tiquetera.git"
+  },
+  "keywords": [],
+  "author": "Juan Jose Oviedo Diaz, Carlos Felipe Rivera, Kenny Andres Martinez, Leidy Catalina Bonilla",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}

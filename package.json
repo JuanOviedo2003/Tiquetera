@@ -1,0 +1,9 @@
+{
+  "name": "tiquetera",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "author": "Juan Jose Oviedo Diaz, Carlos Felipe Rivera, Kenny Andres Martinez, Leidy Catalina Bonilla"
+}
