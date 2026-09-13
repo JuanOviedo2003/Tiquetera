@@ -9,10 +9,10 @@ export default class UserController {
     };
 
     createUser = (req, res) => {
-        const { name, email } = req.body ?? {};
+        const { name, email, password } = req.body ?? {};
 
         try {
-            const user = this.usersService.createUser(name, email);
+            const user = this.usersService.createUser(name, email, password);
             res.status(201).json(user);
         } catch (error) {
             res.status(400).json({ error: error.message });
