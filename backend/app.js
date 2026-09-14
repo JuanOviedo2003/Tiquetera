@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import userRouter from "./src/modules/user/routes/user.route.js";
+import clienteRouter from "./src/modules/cliente/routes/cliente.route.js";
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -13,6 +14,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/users", userRouter);
+app.use("/api/clientes", clienteRouter);
 
 app.use((req, res) => {
 	res.status(404).json({ error: "Ruta no encontrada" });
