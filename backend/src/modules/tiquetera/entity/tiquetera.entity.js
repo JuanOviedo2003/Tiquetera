@@ -31,10 +31,19 @@ export default class TiqueteraEntity {
       result = result.filter((t) => String(t.cliente_id) === String(filters.cliente_id));
     }
 
+    if (filters.cliente_ids !== undefined) {
+      const ids = filters.cliente_ids.map(String);
+      result = result.filter((t) => ids.includes(String(t.cliente_id)));
+    }
+
     if (filters.estado) {
       result = result.filter(
         (t) => t.estado.toUpperCase() === filters.estado.toUpperCase()
       );
+    }
+
+    if (filters.fecha_creacion) {
+      result = result.filter((t) => t.createdAt.slice(0, 10) === filters.fecha_creacion);
     }
 
     return result;

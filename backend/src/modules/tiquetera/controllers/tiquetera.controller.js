@@ -28,15 +28,18 @@ export default class TiqueteraController {
   };
 
   /**
-   * Listar tiqueteras con filtros opcionales (cliente_id, estado)
+   * HU-R4: Consulta y filtrado de tiqueteras
+   * RF-17: filtros opcionales por cliente_id, nombre de cliente, estado y fecha de creación
    * GET /api/tiqueteras
    */
   listar = (req, res) => {
     try {
-      const { cliente_id, estado } = req.query;
+      const { cliente_id, cliente_nombre, estado, fecha_creacion } = req.query;
       const tiqueteras = this.tiqueteraService.getAllTiqueteras({
         cliente_id,
+        cliente_nombre,
         estado,
+        fecha_creacion,
       });
       return res.json(tiqueteras);
     } catch (error) {
