@@ -1,10 +1,10 @@
-import { Router } from 'express';
-// import UserController from '../controllers/login.controller.js';
+import { Router } from "express";
+import LoginController from "./login.controller.js";
 
-const userRouter = Router();
-const userController = new UserController();
+const loginRouter = Router();
+const loginController = new LoginController();
 
-userRouter.get('/', userController.getUsers);
-userRouter.post('/', userController.createUser);
+// HU-R1: POST /api/login -> { email, password }
+loginRouter.post("/", loginController.login);
 
-export default userRouter;
+export default loginRouter;

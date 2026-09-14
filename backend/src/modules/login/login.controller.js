@@ -1,21 +1,16 @@
-import { UsersService } from "../services/user.service.js";
+import { LoginService } from "./login.service.js";
 
-export default class UserController {
-    usersService = new UsersService();
+export default class LoginController {
+  loginService = new LoginService();
 
-    getUsers = (req, res) => {
-        const users = this.usersService.findAllUsers();
-        res.json(users);
-    };
+  login = (req, res) => {
+    const { email, password } = req.body ?? {};
 
-    createUser = (req, res) => {
-        const { name, email } = req.body ?? {};
-
-        try {
-            const user = this.usersService.createUser(name, email);
-            res.status(201).json(user);
-        } catch (error) {
-            res.status(400).json({ error: error.message });
-        }
-    };
+    try {
+      const user = this.loginService.login(email, password);
+      res.status(200).json({ mensaje: "Inicio de sesión exitoso", usuario: user });
+    } catch (error) {
+      res.status(error.statusCode ?? 400).json({ error: error.message });
+    }
+  };
 }
