@@ -3,7 +3,7 @@ let clientes = [];
 export default class ClienteEntity {
   static createOne(data) {
     const cliente = {
-      id: data.id || Date.now(),
+      id: data.id || `CLI-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
       ...data,
       createdAt: new Date().toISOString(),
     };
