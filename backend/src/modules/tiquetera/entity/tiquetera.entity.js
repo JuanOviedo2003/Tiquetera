@@ -8,7 +8,7 @@ let tiqueteras = [
     almuerzos_disponibles: 20,
     estado: "PENDIENTE", // PENDIENTE | ACTIVA | FINALIZADA
     codigo_activacion: "1234",
-    fecha_expiracion_codigo: "2026-05-21",
+    fecha_expiracion_codigo: "2026-12-21",
     codigo_usado: false,
     qr_token: null,
     pin_hash: null,

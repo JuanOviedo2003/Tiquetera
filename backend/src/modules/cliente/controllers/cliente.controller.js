@@ -3,10 +3,7 @@ import { ClienteService } from "../services/cliente.service.js";
 export default class ClienteController {
   clienteService = new ClienteService();
 
-  /**
-   * HU-R2: Registro de clientes
-   * POST /api/clientes
-   */
+  
   crear = (req, res) => {
     try {
       const { nombre, identificacion, telefono, restaurante_id } = req.body ?? {};
@@ -22,10 +19,7 @@ export default class ClienteController {
     }
   };
 
-  /**
-   * Listar clientes de un restaurante
-   * GET /api/clientes
-   */
+  
   listar = (req, res) => {
     try {
       const { restaurante_id } = req.query;
@@ -36,13 +30,12 @@ export default class ClienteController {
     }
   };
 
-  /**
-   * Consultar cliente por ID
-   * GET /api/clientes/:id
-   */
+  
   obtenerPorId = (req, res) => {
     try {
-      const { id } = req.params;
+      const id  = req.params.id;
+      console.log(req)
+      console.log(id)
       const cliente = this.clienteService.getClienteById(id);
       res.json(cliente);
     } catch (error) {

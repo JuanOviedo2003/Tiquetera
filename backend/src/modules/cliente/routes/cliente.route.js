@@ -6,6 +6,6 @@ const clienteController = new ClienteController();
 
 clienteRouter.get("/", clienteController.listar);
 clienteRouter.post("/", clienteController.crear);
-clienteRouter.get("/:id", clienteController.obtenerPorId);
+clienteRouter.get("/search/:id", clienteController.obtenerPorId);
 
 export default clienteRouter;
