@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import userRouter from "./src/modules/user/routes/user.route.js";
+import clienteRouter from "./src/modules/cliente/routes/cliente.route.js";
 import tiqueteraRouter from "./src/modules/tiquetera/routes/tiquetera.route.js";
 import consumoRouter from "./src/modules/consumo/routes/consumo.route.js";
 
@@ -15,6 +16,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/users", userRouter);
+app.use("/api/clientes", clienteRouter);
 app.use("/api/tiqueteras", tiqueteraRouter);
 app.use("/api/consumos", consumoRouter);
 

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import TiqueteraEntity from "../entity/tiquetera.entity.js";
+import ClienteEntity from "../../cliente/entity/cliente.entity.js";
 
 export class TiqueteraService {
   /**
@@ -153,7 +154,30 @@ export class TiqueteraService {
     return tiquetera;
   }
 
-  getAllTiqueteras(filters = {}) {
-    return TiqueteraEntity.findMany(filters);
+  /**
+   * HU-R4: Consulta y filtrado de tiqueteras
+   * RF-17: filtros por nombre de cliente, estado y fecha de creación (YYYY-MM-DD).
+   */
+  getAllTiqueteras({ cliente_id, cliente_nombre, estado, fecha_creacion } = {}) {
+    if (fecha_creacion && !/^\d{4}-\d{2}-\d{2}$/.test(fecha_creacion)) {
+      throw new Error("La fecha de creación debe tener el formato YYYY-MM-DD");
+    }
+
+    const filtros = { cliente_id, estado, fecha_creacion };
+
+    if (cliente_nombre) {
+      const nombreBuscado = cliente_nombre.trim().toLowerCase();
+      filtros.cliente_ids = ClienteEntity.findMany()
+        .filter((c) => c.nombre.toLowerCase().includes(nombreBuscado))
+        .map((c) => c.id);
+    }
+
+    return TiqueteraEntity.findMany(filtros).map((tiquetera) => {
+      const cliente = ClienteEntity.findById(tiquetera.cliente_id);
+      return {
+        ...tiquetera,
+        cliente_nombre: cliente ? cliente.nombre : null,
+      };
+    });
   }
 }
