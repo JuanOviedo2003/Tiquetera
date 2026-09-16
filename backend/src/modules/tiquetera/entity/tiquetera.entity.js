@@ -1,4 +1,23 @@
-let tiqueteras = [];
+let tiqueteras = [
+  {
+    id: "TIQ-000000145",
+    cliente_id: "1002820063",
+    restaurante_id: 21212,
+    total_almuerzos: 5,
+    almuerzos_consumidos: 20,
+    almuerzos_disponibles: 20,
+    estado: "PENDIENTE", // PENDIENTE | ACTIVA | FINALIZADA
+    codigo_activacion: "1234",
+    fecha_expiracion_codigo: "2026-05-21",
+    codigo_usado: false,
+    qr_token: null,
+    pin_hash: null,
+    intentos_fallidos_pin: 0,
+    bloqueado_hasta: null,
+    fecha_activacion: null,
+    fecha_finalizacion: null,
+  }
+];
 
 export default class TiqueteraEntity {
   static createOne(data) {
