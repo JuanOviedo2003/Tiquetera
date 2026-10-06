@@ -5,7 +5,6 @@ import clienteRouter from "./src/modules/cliente/routes/cliente.route.js";
 import tiqueteraRouter from "./src/modules/tiquetera/routes/tiquetera.route.js";
 import consumoRouter from "./src/modules/consumo/routes/consumo.route.js";
 import loginRouter from "./src/modules/login/login.route.js";
-import loginRejilla from "./src/modules/rejilla/rejilla.route.js";
 import rejillaRouter from "./src/modules/rejilla/rejilla.route.js";
 
 const app = express();
@@ -22,18 +21,29 @@ app.use("/api/users", userRouter);
 app.use("/api/clientes", clienteRouter);
 app.use("/api/tiqueteras", tiqueteraRouter);
 app.use("/api/consumos", consumoRouter);
-app.use("/api/login", loginRouter)
-app.use("/api/rejilla", rejillaRouter)
+app.use("/api/login", loginRouter);
+app.use("/api/rejilla", rejillaRouter);
 
 app.use((req, res) => {
     res.status(404).json({ error: "Ruta no encontrada" });
 });
 
-const server = app.listen(port, () => {
-    console.log(`App listening in port: http://localhost:${port}/`);
-});
+const isTestEnvironment =
+    process.env.NODE_ENV === "test" ||
+    process.execArgv.includes("--test") ||
+    process.argv.some((arg) => arg.includes("test"));
 
-server.on("error", (error) => {
-    console.error("No se pudo iniciar el servidor:", error.message);
-    process.exitCode = 1;
-});
+let server = null;
+if (!isTestEnvironment) {
+    server = app.listen(port, () => {
+        console.log(`App listening in port: http://localhost:${port}/`);
+    });
+
+    server.on("error", (error) => {
+        console.error("No se pudo iniciar el servidor:", error.message);
+        process.exitCode = 1;
+    });
+}
+
+export { app, server };
+export default app;

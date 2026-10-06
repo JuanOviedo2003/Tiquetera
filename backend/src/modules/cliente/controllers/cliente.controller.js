@@ -33,9 +33,7 @@ export default class ClienteController {
   
   obtenerPorId = (req, res) => {
     try {
-      const id  = req.params.id;
-      console.log(req)
-      console.log(id)
+      const { id } = req.params;
       const cliente = this.clienteService.getClienteById(id);
       res.json(cliente);
     } catch (error) {

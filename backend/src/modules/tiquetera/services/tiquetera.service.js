@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import TiqueteraEntity from "../entity/tiquetera.entity.js";
 import ClienteEntity from "../../cliente/entity/cliente.entity.js";
+import ConsumoEntity from "../../consumo/entity/consumo.entity.js";
 
 export class TiqueteraService {
   /**
@@ -71,7 +72,7 @@ export class TiqueteraService {
   }
 
   /**
-   * RF-05, RF-06, RF-07: Activación de tiquetera desde el cliente
+   * RF-05, RF-06, RF-07 / HU-C1, HU-C2: Activación de tiquetera desde el cliente
    * Valida código de activación, establece PIN de 6 dígitos hasheado,
    * genera QR token único inmutable y pasa a estado ACTIVA.
    */
@@ -123,35 +124,266 @@ export class TiqueteraService {
     if (!tiquetera) {
       throw new Error("Tiquetera no encontrada");
     }
-    return tiquetera;
+    const cliente = ClienteEntity.findById(tiquetera.cliente_id);
+    return {
+      ...tiquetera,
+      cliente_nombre: cliente ? cliente.nombre : null,
+      cliente: cliente || null,
+    };
   }
+
+  /**
+   * HU-R12: Entrega del código de activación
+   */
   getCodigoActivacion(id) {
-  const tiquetera = TiqueteraEntity.findById(id);
+    const tiquetera = TiqueteraEntity.findById(id);
 
-  if (!tiquetera) {
-    throw new Error("Tiquetera no encontrada");
-  }
-
-  if (tiquetera.estado !== "PENDIENTE") {
-    throw new Error(
-      `No se puede obtener el código de activación de una tiquetera en estado ${tiquetera.estado}`
-    );
-  }
-
-  return {
-    tiquetera_id: tiquetera.id,
-    estado: tiquetera.estado,
-    codigo_activacion: tiquetera.codigo_activacion,
-    fecha_expiracion_codigo: tiquetera.fecha_expiracion_codigo,
-  };
-}
-
-  getTiqueteraByQr(qrToken) {
-    const tiquetera = TiqueteraEntity.findByQrToken(qrToken);
     if (!tiquetera) {
-      throw new Error("Tiquetera no encontrada para el QR proporcionado");
+      throw new Error("Tiquetera no encontrada");
     }
-    return tiquetera;
+
+    if (tiquetera.estado !== "PENDIENTE") {
+      throw new Error(
+        `No se puede obtener el código de activación de una tiquetera en estado ${tiquetera.estado}`
+      );
+    }
+
+    return {
+      tiquetera_id: tiquetera.id,
+      estado: tiquetera.estado,
+      codigo_activacion: tiquetera.codigo_activacion,
+      fecha_expiracion_codigo: tiquetera.fecha_expiracion_codigo,
+    };
+  }
+
+  /**
+   * HU-R5: Apertura de tiquetera por QR
+   * Escanear o ingresar token de QR para abrir vista del cliente
+   */
+  getTiqueteraByQr(qrToken) {
+    if (!qrToken || !String(qrToken).trim()) {
+      const error = new Error("El qr_token es obligatorio");
+      error.status = 400;
+      throw error;
+    }
+
+    const tiquetera = TiqueteraEntity.findByQrToken(String(qrToken).trim());
+    if (!tiquetera) {
+      const error = new Error("Tiquetera no encontrada para el QR proporcionado");
+      error.status = 404;
+      throw error;
+    }
+
+    const cliente = ClienteEntity.findById(tiquetera.cliente_id);
+    return {
+      ...tiquetera,
+      cliente_nombre: cliente ? cliente.nombre : null,
+      cliente: cliente || null,
+    };
+  }
+
+  /**
+   * HU-R6: Validación de PIN del cliente antes de mostrar la tiquetera y autorizar operaciones
+   */
+  validarPin({ tiquetera_id, qr_token, pin }) {
+    let tiquetera = null;
+    if (tiquetera_id) {
+      tiquetera = TiqueteraEntity.findById(tiquetera_id);
+    } else if (qr_token) {
+      tiquetera = TiqueteraEntity.findByQrToken(String(qr_token).trim());
+    } else {
+      const error = new Error("Se requiere el id o el qr_token de la tiquetera");
+      error.status = 400;
+      throw error;
+    }
+
+    if (!tiquetera) {
+      const error = new Error("Tiquetera no encontrada");
+      error.status = 404;
+      throw error;
+    }
+
+    if (tiquetera.estado !== "ACTIVA") {
+      const error = new Error(
+        `Operación rechazada: la tiquetera no está ACTIVA (estado actual: ${tiquetera.estado})`
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    if (!pin || !/^\d{6}$/.test(String(pin).trim())) {
+      const error = new Error("El PIN debe tener exactamente 6 dígitos numéricos");
+      error.status = 400;
+      throw error;
+    }
+
+    const ahora = Date.now();
+    if (tiquetera.bloqueado_hasta && ahora < new Date(tiquetera.bloqueado_hasta).getTime()) {
+      const minutosRestantes = Math.ceil(
+        (new Date(tiquetera.bloqueado_hasta).getTime() - ahora) / (60 * 1000)
+      );
+      const error = new Error(
+        `Tiquetera bloqueada temporalmente por intentos fallidos de PIN. Intente de nuevo en ${minutosRestantes} minuto(s)`
+      );
+      error.status = 403;
+      throw error;
+    }
+
+    const pinHashIngresado = crypto
+      .createHash("sha256")
+      .update(String(pin).trim())
+      .digest("hex");
+
+    if (pinHashIngresado !== tiquetera.pin_hash) {
+      const nuevosIntentos = (tiquetera.intentos_fallidos_pin || 0) + 1;
+      let nuevoBloqueo = null;
+      if (nuevosIntentos >= 3) {
+        nuevoBloqueo = new Date(ahora + 15 * 60 * 1000).toISOString();
+      }
+
+      TiqueteraEntity.updateOne(tiquetera.id, {
+        intentos_fallidos_pin: nuevosIntentos,
+        bloqueado_hasta: nuevoBloqueo,
+      });
+
+      const mensaje =
+        nuevosIntentos >= 3
+          ? "PIN incorrecto. Se alcanzó el límite de 3 intentos y la tiquetera fue bloqueada temporalmente por 15 minutos."
+          : `PIN incorrecto. Intento ${nuevosIntentos} de 3.`;
+
+      const error = new Error(mensaje);
+      error.status = 401;
+      throw error;
+    }
+
+    // PIN correcto -> resetear intentos
+    if (tiquetera.intentos_fallidos_pin > 0 || tiquetera.bloqueado_hasta) {
+      tiquetera = TiqueteraEntity.updateOne(tiquetera.id, {
+        intentos_fallidos_pin: 0,
+        bloqueado_hasta: null,
+      });
+    }
+
+    const cliente = ClienteEntity.findById(tiquetera.cliente_id);
+    return {
+      autorizado: true,
+      mensaje: "PIN validado exitosamente",
+      tiquetera_id: tiquetera.id,
+      qr_token: tiquetera.qr_token,
+      cliente: cliente
+        ? {
+            nombre: cliente.nombre,
+            identificacion: cliente.identificacion,
+            telefono: cliente.telefono,
+          }
+        : null,
+      saldo: {
+        total: tiquetera.total_almuerzos,
+        consumidos: tiquetera.almuerzos_consumidos,
+        disponibles: tiquetera.almuerzos_disponibles,
+      },
+    };
+  }
+
+  /**
+   * HU-C3: Regeneración de PIN
+   * RF-06: Permite al cliente regenerar su PIN de 6 dígitos en cualquier momento usando su QR
+   */
+  regenerarPin({ qr_token, nuevo_pin }) {
+    if (!qr_token || !String(qr_token).trim()) {
+      const error = new Error("El qr_token es obligatorio");
+      error.status = 400;
+      throw error;
+    }
+
+    if (!nuevo_pin || !/^\d{6}$/.test(String(nuevo_pin).trim())) {
+      const error = new Error("El nuevo PIN debe tener exactamente 6 dígitos numéricos");
+      error.status = 400;
+      throw error;
+    }
+
+    const tiquetera = TiqueteraEntity.findByQrToken(String(qr_token).trim());
+    if (!tiquetera) {
+      const error = new Error("Tiquetera no encontrada");
+      error.status = 404;
+      throw error;
+    }
+
+    if (tiquetera.estado !== "ACTIVA") {
+      const error = new Error(
+        `Solo se puede regenerar el PIN de una tiquetera en estado ACTIVA (estado actual: ${tiquetera.estado})`
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    const pinHash = crypto.createHash("sha256").update(String(nuevo_pin).trim()).digest("hex");
+
+    const tiqueteraActualizada = TiqueteraEntity.updateOne(tiquetera.id, {
+      pin_hash: pinHash,
+      intentos_fallidos_pin: 0,
+      bloqueado_hasta: null,
+      fecha_regeneracion_pin: new Date().toISOString(),
+    });
+
+    return {
+      mensaje: "PIN regenerado exitosamente",
+      tiquetera_id: tiqueteraActualizada.id,
+      qr_token: tiqueteraActualizada.qr_token,
+    };
+  }
+
+  /**
+   * HU-C4 & HU-C5: Consulta pública de saldo e historial del cliente (solo lectura sin cuenta)
+   * RF-08, RF-16, RNF-07: nombre, estado, saldos y movimientos agrupados por día sin datos sensibles
+   */
+  getVistaPublicaCliente(qrToken) {
+    if (!qrToken || !String(qrToken).trim()) {
+      const error = new Error("El qr_token es obligatorio");
+      error.status = 400;
+      throw error;
+    }
+
+    const tiquetera = TiqueteraEntity.findByQrToken(String(qrToken).trim());
+    if (!tiquetera) {
+      const error = new Error("Tiquetera no encontrada");
+      error.status = 404;
+      throw error;
+    }
+
+    const cliente = ClienteEntity.findById(tiquetera.cliente_id);
+    const movimientos = ConsumoEntity.findByTiqueteraId(tiquetera.id).map((m) => ({
+      id: m.id,
+      tipo: m.tipo,
+      cantidad: m.cantidad,
+      fecha_hora: m.fecha_hora,
+      cuadros_afectados: m.cuadros_seleccionados || [],
+      saldo_posterior: m.saldo_posterior,
+    }));
+
+    // Agrupar movimientos por día calendario
+    const movimientosPorDia = {};
+    for (const mov of movimientos) {
+      const dia = mov.fecha_hora.slice(0, 10);
+      if (!movimientosPorDia[dia]) {
+        movimientosPorDia[dia] = [];
+      }
+      movimientosPorDia[dia].push(mov);
+    }
+
+    return {
+      qr_token: tiquetera.qr_token,
+      url_consulta: `/api/tiqueteras/public/qr/${tiquetera.qr_token}`,
+      cliente_nombre: cliente ? cliente.nombre : "Cliente",
+      estado: tiquetera.estado,
+      saldo: {
+        total: tiquetera.total_almuerzos,
+        consumidos: tiquetera.almuerzos_consumidos,
+        disponibles: tiquetera.almuerzos_disponibles,
+      },
+      movimientos,
+      movimientos_por_dia: movimientosPorDia,
+    };
   }
 
   /**

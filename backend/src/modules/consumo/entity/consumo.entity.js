@@ -18,6 +18,10 @@ export default class ConsumoEntity {
     return movimiento;
   }
 
+  static findById(id) {
+    return movimientos.find((m) => String(m.id) === String(id)) || null;
+  }
+
   static findByTiqueteraId(tiqueteraId) {
     return movimientos
       .filter((m) => String(m.tiquetera_id) === String(tiqueteraId))

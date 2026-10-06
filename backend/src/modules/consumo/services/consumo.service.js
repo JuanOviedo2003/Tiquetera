@@ -163,9 +163,111 @@ export class ConsumoService {
   }
 
   /**
-   * RF-15: Consulta del historial de movimientos de una tiquetera
+   * HU-R9: Corrección de consumo del mismo día
+   * RF-14: Permite deseleccionar un cuadro consumido únicamente dentro del mismo día calendario,
+   * generando una reversa inmutable y restaurando el saldo de la tiquetera.
    */
-  obtenerHistorialPorTiquetera(tiquetera_id) {
+  revertirConsumo({ consumo_id, usuario_id, cuadro_deseleccionado = null, motivo = "Corrección del mismo día" }) {
+    if (!consumo_id) {
+      const error = new Error("El id del consumo original es obligatorio");
+      error.status = 400;
+      throw error;
+    }
+
+    if (!usuario_id) {
+      const error = new Error("El id del usuario del restaurante que realiza la reversa es obligatorio");
+      error.status = 400;
+      throw error;
+    }
+
+    const consumoOriginal = ConsumoEntity.findById(consumo_id);
+    if (!consumoOriginal) {
+      const error = new Error("Consumo no encontrado");
+      error.status = 404;
+      throw error;
+    }
+
+    if (consumoOriginal.tipo !== "CONSUMO") {
+      const error = new Error("Solo se pueden revertir registros de tipo CONSUMO");
+      error.status = 400;
+      throw error;
+    }
+
+    // Validar restricción del mismo día calendario (RF-14)
+    const fechaConsumoStr = new Date(consumoOriginal.fecha_hora).toISOString().slice(0, 10);
+    const fechaHoyStr = new Date().toISOString().slice(0, 10);
+
+    if (fechaConsumoStr !== fechaHoyStr) {
+      const error = new Error("Solo es posible corregir consumos registrados dentro del mismo día calendario");
+      error.status = 400;
+      throw error;
+    }
+
+    // Verificar si ya fue revertido
+    const todosMovimientos = ConsumoEntity.findByTiqueteraId(consumoOriginal.tiquetera_id);
+    const reversasPrevias = todosMovimientos.filter(
+      (m) => m.tipo === "REVERSA" && String(m.consumo_referencia_id) === String(consumo_id)
+    );
+    const cantidadYaRevertida = reversasPrevias.reduce((acc, r) => acc + (r.cantidad || 0), 0);
+
+    if (cantidadYaRevertida >= consumoOriginal.cantidad) {
+      const error = new Error("El consumo ya ha sido revertido en su totalidad");
+      error.status = 400;
+      throw error;
+    }
+
+    const cantidadRevertir = cuadro_deseleccionado !== null ? 1 : (consumoOriginal.cantidad - cantidadYaRevertida);
+
+    // Actualizar tiquetera
+    const tiquetera = TiqueteraEntity.findById(consumoOriginal.tiquetera_id);
+    if (!tiquetera) {
+      const error = new Error("Tiquetera asociada no encontrada");
+      error.status = 404;
+      throw error;
+    }
+
+    const saldoAnterior = tiquetera.almuerzos_disponibles;
+    const nuevosDisponibles = Math.min(
+      tiquetera.total_almuerzos,
+      tiquetera.almuerzos_disponibles + cantidadRevertir
+    );
+    const nuevosConsumidos = Math.max(0, tiquetera.almuerzos_consumidos - cantidadRevertir);
+
+    const actualizacionTiquetera = {
+      almuerzos_disponibles: nuevosDisponibles,
+      almuerzos_consumidos: nuevosConsumidos,
+      estado: "ACTIVA", // Si estaba FINALIZADA, reactiva la tiquetera
+      fecha_finalizacion: nuevosDisponibles === 0 ? tiquetera.fecha_finalizacion : null,
+    };
+
+    const tiqueteraActualizada = TiqueteraEntity.updateOne(tiquetera.id, actualizacionTiquetera);
+
+    // Crear registro de reversa inmutable (RF-14, RNF-04)
+    const movimiento = ConsumoEntity.createOne({
+      tiquetera_id: tiquetera.id,
+      tipo: "REVERSA",
+      consumo_referencia_id: consumoOriginal.id,
+      cantidad: cantidadRevertir,
+      usuario_id,
+      motivo,
+      fecha_hora: new Date().toISOString(),
+      saldo_anterior: saldoAnterior,
+      saldo_posterior: nuevosDisponibles,
+      cuadros_seleccionados: cuadro_deseleccionado !== null
+        ? [cuadro_deseleccionado]
+        : (consumoOriginal.cuadros_seleccionados || []),
+    });
+
+    return {
+      movimiento,
+      tiquetera: tiqueteraActualizada,
+    };
+  }
+
+  /**
+   * RF-15 / HU-R10: Consulta del historial de movimientos de una tiquetera con filtro opcional por fecha
+   */
+  obtenerHistorialPorTiquetera(tiquetera_id, { fecha } = {}) {
     if (!tiquetera_id) {
       const error = new Error("El id de la tiquetera es obligatorio");
       error.status = 400;
@@ -179,6 +281,12 @@ export class ConsumoService {
       throw error;
     }
 
-    return ConsumoEntity.findByTiqueteraId(tiquetera_id);
+    let movimientos = ConsumoEntity.findByTiqueteraId(tiquetera_id);
+
+    if (fecha) {
+      movimientos = movimientos.filter((m) => m.fecha_hora.slice(0, 10) === String(fecha).trim());
+    }
+
+    return movimientos;
   }
 }

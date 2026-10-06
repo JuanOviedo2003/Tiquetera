@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import LoginEntity from "./login.entity.js";
 
 export class LoginService {
@@ -16,19 +17,37 @@ export class LoginService {
 
     const user = LoginEntity.findByEmail(email.trim().toLowerCase());
 
-    if (!user || user.password !== password) {
+    if (!user) {
       const error = new Error("Credenciales inválidas");
       error.statusCode = 401;
       throw error;
     }
 
-    if (!user.activo) {
+    let passwordMatches = false;
+    if (user.passwordHash) {
+      try {
+        passwordMatches = bcrypt.compareSync(password, user.passwordHash);
+      } catch {
+        passwordMatches = false;
+      }
+    } else if (user.password) {
+      passwordMatches = user.password === password;
+    }
+
+    if (!passwordMatches) {
+      const error = new Error("Credenciales inválidas");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const isActivo = user.activo !== undefined ? user.activo : (user.active !== false);
+    if (!isActivo) {
       const error = new Error("Usuario inactivo");
       error.statusCode = 403;
       throw error;
     }
 
-    const { password: _password, ...userSinPassword } = user;
+    const { password: _p, passwordHash: _ph, ...userSinPassword } = user;
     return userSinPassword;
   }
 }

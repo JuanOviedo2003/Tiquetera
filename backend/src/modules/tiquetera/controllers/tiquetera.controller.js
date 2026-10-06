@@ -110,10 +110,78 @@ export default class TiqueteraController {
       return res.json({
         mensaje: "Tiquetera activada exitosamente",
         qr_token: tiquetera.qr_token,
+        url_consulta: `/api/tiqueteras/public/qr/${tiquetera.qr_token}`,
         tiquetera,
       });
     } catch (error) {
       return res.status(400).json({ error: error.message });
+    }
+  };
+
+  /**
+   * HU-R5: Apertura de tiquetera por QR
+   * GET /api/tiqueteras/qr/:qrToken
+   */
+  obtenerPorQr = (req, res) => {
+    try {
+      const { qrToken } = req.params;
+      const tiquetera = this.tiqueteraService.getTiqueteraByQr(qrToken);
+      return res.json(tiquetera);
+    } catch (error) {
+      const statusCode = error.status || 404;
+      return res.status(statusCode).json({ error: error.message });
+    }
+  };
+
+  /**
+   * HU-R6: Validación de PIN del cliente antes de mostrar la rejilla
+   * POST /api/tiqueteras/validar-pin o POST /api/tiqueteras/:id/validar-pin
+   */
+  validarPin = (req, res) => {
+    try {
+      const { tiquetera_id, qr_token, pin } = req.body ?? {};
+      const resultado = this.tiqueteraService.validarPin({
+        tiquetera_id: tiquetera_id || req.params.id,
+        qr_token,
+        pin,
+      });
+      return res.json(resultado);
+    } catch (error) {
+      const statusCode = error.status || 400;
+      return res.status(statusCode).json({ error: error.message });
+    }
+  };
+
+  /**
+   * HU-C3: Regeneración de PIN por parte del cliente
+   * POST /api/tiqueteras/regenerar-pin
+   */
+  regenerarPin = (req, res) => {
+    try {
+      const { qr_token, nuevo_pin } = req.body ?? {};
+      const resultado = this.tiqueteraService.regenerarPin({
+        qr_token,
+        nuevo_pin,
+      });
+      return res.json(resultado);
+    } catch (error) {
+      const statusCode = error.status || 400;
+      return res.status(statusCode).json({ error: error.message });
+    }
+  };
+
+  /**
+   * HU-C4 & HU-C5: Consulta pública de saldo e historial del cliente (solo lectura sin cuenta)
+   * GET /api/tiqueteras/public/qr/:qrToken
+   */
+  obtenerVistaPublica = (req, res) => {
+    try {
+      const { qrToken } = req.params;
+      const vista = this.tiqueteraService.getVistaPublicaCliente(qrToken);
+      return res.json(vista);
+    } catch (error) {
+      const statusCode = error.status || 404;
+      return res.status(statusCode).json({ error: error.message });
     }
   };
 }
