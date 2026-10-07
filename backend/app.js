@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import "./src/config/database.js";
 import userRouter from "./src/modules/user/routes/user.route.js";
 import clienteRouter from "./src/modules/cliente/routes/cliente.route.js";
 import tiqueteraRouter from "./src/modules/tiquetera/routes/tiquetera.route.js";
