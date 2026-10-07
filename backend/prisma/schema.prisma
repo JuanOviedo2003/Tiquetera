@@ -1,0 +1,72 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @map("_id")
+  name         String
+  email        String   @unique
+  passwordHash String?
+  password     String?
+  role         String   @default("RESTAURANTE")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@map("users")
+}
+
+model Cliente {
+  id             String   @id @map("_id")
+  nombre         String
+  identificacion String
+  telefono       String?
+  restaurante_id String
+  createdAt      DateTime @default(now())
+
+  @@map("clientes")
+}
+
+model Tiquetera {
+  id                      String    @id @map("_id")
+  cliente_id              String
+  restaurante_id          String?
+  total_almuerzos         Int
+  almuerzos_consumidos    Int       @default(0)
+  almuerzos_disponibles   Int
+  estado                  String    @default("PENDIENTE")
+  codigo_activacion       String?
+  fecha_expiracion_codigo DateTime?
+  codigo_usado            Boolean   @default(false)
+  qr_token                String?   @unique
+  pin_hash                String?
+  intentos_fallidos_pin   Int       @default(0)
+  bloqueado_hasta         DateTime?
+  fecha_activacion        DateTime?
+  fecha_finalizacion      DateTime?
+  fecha_regeneracion_pin  DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@map("tiqueteras")
+}
+
+model Movimiento {
+  id                    String   @id @map("_id")
+  tiquetera_id          String
+  tipo                  String   @default("CONSUMO")
+  consumo_referencia_id String?
+  cantidad              Int
+  usuario_id            String?
+  motivo                String?
+  fecha_hora            DateTime @default(now())
+  saldo_anterior        Int?
+  saldo_posterior       Int?
+  cuadros_seleccionados Json?
+
+  @@map("movimientos")
+}

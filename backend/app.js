@@ -1,6 +1,9 @@
 import express from "express";
 import cors from "cors";
+import path from "node:path";
+import fs from "node:fs";
 import "./src/config/database.js";
+import { connectPrisma } from "./src/config/prisma.js";
 import userRouter from "./src/modules/user/routes/user.route.js";
 import clienteRouter from "./src/modules/cliente/routes/cliente.route.js";
 import tiqueteraRouter from "./src/modules/tiquetera/routes/tiquetera.route.js";
@@ -25,6 +28,24 @@ app.use("/api/consumos", consumoRouter);
 app.use("/api/login", loginRouter);
 app.use("/api/rejilla", rejillaRouter);
 
+// Servir frontend estático compilado en producción si está disponible
+const potentialDistPaths = [
+    path.resolve(process.cwd(), "frontend/dist"),
+    path.resolve(process.cwd(), "../frontend/dist"),
+    path.resolve(import.meta.dirname, "../frontend/dist"),
+    path.resolve(import.meta.dirname, "../../frontend/dist"),
+];
+const distPath = potentialDistPaths.find((p) => fs.existsSync(p));
+if (distPath) {
+    app.use(express.static(distPath));
+    app.use((req, res, next) => {
+        if (req.method === "GET" && !req.path.startsWith("/api") && req.path !== "/health") {
+            return res.sendFile(path.join(distPath, "index.html"));
+        }
+        next();
+    });
+}
+
 app.use((req, res) => {
     res.status(404).json({ error: "Ruta no encontrada" });
 });
@@ -36,8 +57,9 @@ const isTestEnvironment =
 
 let server = null;
 if (!isTestEnvironment) {
-    server = app.listen(port, () => {
+    server = app.listen(port, async () => {
         console.log(`App listening in port: http://localhost:${port}/`);
+        await connectPrisma();
     });
 
     server.on("error", (error) => {

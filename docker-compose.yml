@@ -1,0 +1,63 @@
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: tiquetera-mongodb
+    restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "mongosh --port 27017 --eval \"try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }).ok }\" --quiet"
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 5s
+    networks:
+      - tiquetera-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tiquetera-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_URL=mongodb://mongo:27017/tiquetera?replicaSet=rs0&directConnection=true
+    volumes:
+      - backend_data:/app/data
+    networks:
+      - tiquetera-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tiquetera-frontend
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+    networks:
+      - tiquetera-net
+
+volumes:
+  mongo_data:
+    driver: local
+  backend_data:
+    driver: local
+
+networks:
+  tiquetera-net:
+    driver: bridge
