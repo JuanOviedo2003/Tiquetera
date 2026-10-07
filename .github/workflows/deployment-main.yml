@@ -17,7 +17,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            cd /home/admin/GithubSecretsDeploy/
+            cd ~/projects/electivaVNocturno/equipo-1
             git fetch
             git checkout ${{ secrets.MAIN_BRANCH}}
             git pull origin main
