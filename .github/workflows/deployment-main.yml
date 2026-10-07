@@ -20,7 +20,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            cd ~/projects/electivaVNocturno/equipo-1
+            cd ~/projects/electivaVNocturno/equipo-1/Tiquetera
             git fetch origin
             git checkout main
             git pull origin main
