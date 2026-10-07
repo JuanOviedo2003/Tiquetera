@@ -1,14 +1,17 @@
+name: Deploy to Server
+
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+
 jobs:
-  run_pull:
-    name: run pull
+  deploy:
+    name: Deploy via SSH
     runs-on: ubuntu-latest
     steps:
-      - name: executing remote ssh commands using ssh
+      - name: Executing remote SSH commands
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -18,10 +21,9 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd ~/projects/electivaVNocturno/equipo-1
-            git fetch
-            git checkout ${{ secrets.MAIN_BRANCH}}
+            git fetch origin
+            git checkout main
             git pull origin main
-            cd apolobyte_web_page
-            npm i
-            npm run build
+            docker compose down
+            docker compose up --build -d
             exit
