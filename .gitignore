@@ -150,3 +150,7 @@ vite.config.ts.timestamp-*
 data/
 backend/data/
 
+
+.agents
+
+*.json
