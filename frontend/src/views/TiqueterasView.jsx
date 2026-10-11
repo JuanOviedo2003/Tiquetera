@@ -12,10 +12,11 @@ import {
   RefreshCw,
   Loader2,
   User,
-  ShieldAlert,
   Search,
-  ExternalLink,
   MessageCircle,
+  X,
+  Utensils,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function TiqueterasView({ preselectedClient, onClearPreselectedClient, onShowToast }) {
@@ -28,14 +29,14 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
   const [filterEstado, setFilterEstado] = useState('');
   const [filterNombre, setFilterNombre] = useState('');
 
-  // Modal: Crear Tiquetera (HU-R3)
+  // Modal: Crear Tiquetera
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedClienteId, setSelectedClienteId] = useState('');
   const [totalAlmuerzos, setTotalAlmuerzos] = useState(15);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
 
-  // Modal: Entrega de Código de Activación (HU-R12)
+  // Modal: Entrega de Código de Activación
   const [codeModalData, setCodeModalData] = useState(null);
   const [copied, setCopied] = useState(false);
   const [reissuing, setReissuing] = useState(false);
@@ -55,7 +56,8 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
     } catch (err) {
       onShowToast({
         type: 'error',
-        message: err.message || 'Error al cargar información',
+        title: 'Error de Lectura',
+        message: err.message || 'No fue posible cargar las tiqueteras del restaurante',
       });
     } finally {
       setLoading(false);
@@ -75,11 +77,11 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
     }
   }, [preselectedClient]);
 
-  // Manejo de creación (HU-R3)
+  // Manejo de creación
   const handleCreateTiquetera = async (e) => {
     e.preventDefault();
     if (!selectedClienteId) {
-      setCreateError('Debes seleccionar un cliente');
+      setCreateError('Debes seleccionar un cliente del directorio');
       return;
     }
     if (!totalAlmuerzos || Number(totalAlmuerzos) <= 0) {
@@ -101,7 +103,8 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
 
       onShowToast({
         type: 'success',
-        message: 'Tiquetera creada en estado PENDIENTE con código de activación',
+        title: 'Tiquetera Emitida',
+        message: `Pase de ${tiq.total_almuerzos} almuerzos generado con código de activación.`,
       });
 
       setIsCreateModalOpen(false);
@@ -109,7 +112,7 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
       setTotalAlmuerzos(15);
       fetchData();
 
-      // Abrir inmediatamente modal de entrega del código (HU-R12)
+      // Abrir inmediatamente modal de entrega del código
       setCodeModalData({
         id: tiq.id,
         codigo: tiq.codigo_activacion,
@@ -119,13 +122,13 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
         fechaExpiracion: tiq.fecha_expiracion_codigo,
       });
     } catch (err) {
-      setCreateError(err.message || 'Error al crear la tiquetera');
+      setCreateError(err.message || 'Error al emitir la tiquetera');
     } finally {
       setCreating(false);
     }
   };
 
-  // Consultar código de activación de una tiquetera existente (HU-R12)
+  // Consultar código de activación de una tiquetera existente
   const handleOpenCodeModal = async (tiquetera) => {
     try {
       const codeInfo = await api.getCodigoActivacion(tiquetera.id);
@@ -142,30 +145,36 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
     } catch (err) {
       onShowToast({
         type: 'error',
-        message: err.message || 'Error al consultar código de activación',
+        title: 'Error de Consulta',
+        message: err.message || 'No se pudo obtener el código de activación',
       });
     }
   };
 
-  // Copiar código al portapapeles (HU-R12)
+  // Copiar código al portapapeles
   const handleCopyCode = async (code) => {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       onShowToast({
         type: 'success',
-        message: '¡Código de activación copiado al portapapeles!',
+        title: '¡Código Copiado!',
+        message: `Código ${code} copiado en el portapapeles para compartir.`,
       });
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      onShowToast({ type: 'error', message: 'No se pudo copiar automáticamente' });
+      onShowToast({
+        type: 'error',
+        title: 'Aviso',
+        message: 'No fue posible copiar al portapapeles en este dispositivo',
+      });
     }
   };
 
-  // Compartir por WhatsApp (HU-R12)
+  // Compartir por WhatsApp
   const handleShareWhatsApp = () => {
     if (!codeModalData) return;
-    const text = `¡Hola ${codeModalData.clienteNombre}! 🍽️\nTu tiquetera de ${codeModalData.totalAlmuerzos} almuerzos ha sido generada en nuestro restaurante.\n\n🔑 Tu código de activación es: *${codeModalData.codigo}*\n\nIngresa al portal para activarla y obtener tu QR:\n${window.location.origin}\n\n⚠️ Este código vence en 48 horas. ¡Buen provecho!`;
+    const text = `¡Hola ${codeModalData.clienteNombre}! 🍽️\nTu tiquetera de ${codeModalData.totalAlmuerzos} almuerzos ha sido generada en nuestro restaurante.\n\n🔑 Tu código de activación es: *${codeModalData.codigo}*\n\nIngresa al portal para activarla y obtener tu QR de consumo:\n${window.location.origin}\n\n⚠️ Este código vence en 48 horas. ¡Buen provecho!`;
     const cleanPhone = (codeModalData.clienteTelefono || '').replace(/\D/g, '');
     const waUrl = cleanPhone
       ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
@@ -173,7 +182,7 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
     window.open(waUrl, '_blank');
   };
 
-  // Reemitir código (RF-04)
+  // Reemitir código
   const handleReemitirCodigo = async () => {
     if (!codeModalData) return;
     setReissuing(true);
@@ -186,32 +195,35 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
       }));
       onShowToast({
         type: 'success',
-        message: 'Código de activación reemitido con nueva vigencia de 48h',
+        title: 'Nuevo Código Generado',
+        message: 'Nueva vigencia de 48 horas establecida para la activación.',
       });
       fetchData();
     } catch (err) {
       onShowToast({
         type: 'error',
-        message: err.message || 'Error al reemitir código',
+        title: 'Error al Reemitir',
+        message: err.message || 'No se pudo generar un nuevo código',
       });
     } finally {
       setReissuing(false);
     }
   };
 
+  const pendientesCount = tiqueteras.filter((t) => t.estado === 'PENDIENTE').length;
+  const activasCount = tiqueteras.filter((t) => t.estado === 'ACTIVA').length;
+  const finalizadasCount = tiqueteras.filter((t) => t.estado === 'FINALIZADA').length;
+
   return (
     <div className="space-y-6">
-      {/* Header and stats */}
+      {/* Header and Call to Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            Gestión y Emisión de Tiqueteras
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold">
-              HU-R3 · HU-R12
-            </span>
-          </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Emite tiqueteras a clientes y entrega sus códigos de activación de 6 dígitos
+          <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight font-display">
+            Control de Tiqueteras
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Emisión de pases de almuerzos prepagados y entrega de códigos a comensales
           </p>
         </div>
 
@@ -220,90 +232,100 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
             setCreateError(null);
             setIsCreateModalOpen(true);
           }}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-slate-950 font-bold text-sm shadow-lg shadow-orange-500/20 transition-all cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#e0533c] hover:bg-[#c94530] text-white font-bold text-sm shadow-md shadow-[#e0533c]/20 transition-all cursor-pointer shrink-0 touch-press"
         >
           <Plus className="w-4 h-4" />
-          Nueva Tiquetera
+          <span>Emitir Tiquetera</span>
         </button>
       </div>
 
-      {/* KPI Stats overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="glass-panel p-4 rounded-xl border border-slate-800/80">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+      {/* KPI Stats Bar */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-[#151821] p-3.5 sm:p-4 rounded-xl border border-[#252a36]">
+          <span className="text-[11px] font-semibold text-slate-400 block">
             Total Emitidas
           </span>
-          <span className="text-2xl font-black text-white mt-1 block">
+          <span className="text-xl sm:text-2xl font-bold text-white mt-0.5 block font-mono">
             {tiqueteras.length}
           </span>
         </div>
-        <div className="glass-panel p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
-          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block">
-            Pendientes (Por Activar)
+        <div className="bg-[#151821] p-3.5 sm:p-4 rounded-xl border border-[#e5a93c]/30">
+          <span className="text-[11px] font-semibold text-[#e5a93c] block flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#e5a93c]" />
+            Por Activar
           </span>
-          <span className="text-2xl font-black text-amber-300 mt-1 block">
-            {tiqueteras.filter((t) => t.estado === 'PENDIENTE').length}
-          </span>
-        </div>
-        <div className="glass-panel p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">
-            Activas en Uso
-          </span>
-          <span className="text-2xl font-black text-emerald-300 mt-1 block">
-            {tiqueteras.filter((t) => t.estado === 'ACTIVA').length}
+          <span className="text-xl sm:text-2xl font-bold text-[#e5a93c] mt-0.5 block font-mono">
+            {pendientesCount}
           </span>
         </div>
-        <div className="glass-panel p-4 rounded-xl border border-slate-800/80">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+        <div className="bg-[#151821] p-3.5 sm:p-4 rounded-xl border border-emerald-500/30">
+          <span className="text-[11px] font-semibold text-emerald-400 block flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            En Consumo
+          </span>
+          <span className="text-xl sm:text-2xl font-bold text-emerald-400 mt-0.5 block font-mono">
+            {activasCount}
+          </span>
+        </div>
+        <div className="bg-[#151821] p-3.5 sm:p-4 rounded-xl border border-[#252a36]">
+          <span className="text-[11px] font-semibold text-slate-400 block">
             Finalizadas
           </span>
-          <span className="text-2xl font-black text-slate-400 mt-1 block">
-            {tiqueteras.filter((t) => t.estado === 'FINALIZADA').length}
+          <span className="text-xl sm:text-2xl font-bold text-slate-400 mt-0.5 block font-mono">
+            {finalizadasCount}
           </span>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
         <div className="sm:col-span-2 relative">
-          <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={filterNombre}
             onChange={(e) => setFilterNombre(e.target.value)}
-            placeholder="Filtrar por nombre de cliente..."
-            className="w-full bg-slate-900/80 border border-slate-800 rounded-xl pl-12 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            placeholder="Buscar por comensal o cliente..."
+            className="w-full bg-[#151821] border border-[#262c38] rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#e0533c] focus:ring-1 focus:ring-[#e0533c] transition-all"
           />
+          {filterNombre && (
+            <button
+              onClick={() => setFilterNombre('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         <div>
           <select
             value={filterEstado}
             onChange={(e) => setFilterEstado(e.target.value)}
-            className="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            className="w-full bg-[#151821] border border-[#262c38] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#e0533c] focus:ring-1 focus:ring-[#e0533c] transition-all"
           >
             <option value="">Todos los estados</option>
             <option value="PENDIENTE">PENDIENTE (con código)</option>
-            <option value="ACTIVA">ACTIVA (consumiendo)</option>
+            <option value="ACTIVA">ACTIVA (en uso)</option>
             <option value="FINALIZADA">FINALIZADA (agotada)</option>
           </select>
         </div>
       </div>
 
-      {/* Tiqueteras List */}
+      {/* Tiqueteras Cards Grid */}
       {loading ? (
         <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-          <p className="text-sm">Cargando tiqueteras...</p>
+          <Loader2 className="w-7 h-7 animate-spin text-[#e0533c]" />
+          <p className="text-sm">Cargando tiqueteras del sistema...</p>
         </div>
       ) : tiqueteras.length === 0 ? (
-        <div className="p-12 text-center glass-panel rounded-2xl border border-slate-800/80">
+        <div className="p-10 text-center bg-[#151821] rounded-2xl border border-[#252a37]">
           <Ticket className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-white">No hay tiqueteras</h3>
-          <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">
+          <h3 className="text-base font-bold text-white font-display">No hay tiqueteras registradas</h3>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-sm mx-auto">
             {filterEstado || filterNombre
-              ? 'No hay tiqueteras que coincidan con los filtros aplicados.'
-              : 'Emite la primera tiquetera para entregar el código de activación al cliente.'}
+              ? 'No hay registros que coincidan con los filtros aplicados.'
+              : 'Emite la primera tiquetera para entregar el pase de almuerzo al cliente.'}
           </p>
         </div>
       ) : (
@@ -313,75 +335,135 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
             const isActiva = tiq.estado === 'ACTIVA';
             const isFinalizada = tiq.estado === 'FINALIZADA';
 
+            // Porcentaje de almuerzos disponibles
+            const percentAvailable = Math.round(
+              (tiq.almuerzos_disponibles / tiq.total_almuerzos) * 100
+            );
+
             return (
               <div
                 key={tiq.id}
-                className="glass-panel p-5 rounded-2xl border border-slate-800/80 hover:border-slate-700/80 transition-all flex flex-col justify-between"
+                className={`ticket-silhouette transition-all flex flex-col justify-between ${
+                  isPendiente
+                    ? 'border-[#e5a93c]/30 hover:border-[#e5a93c]/50'
+                    : isActiva
+                    ? 'border-emerald-500/30 hover:border-emerald-500/50'
+                    : 'border-[#262c37] opacity-80'
+                }`}
               >
-                <div>
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div>
-                      <span className="text-[11px] font-mono font-semibold text-slate-400 block">
-                        {tiq.id}
-                      </span>
-                      <h4 className="text-base font-bold text-white mt-0.5">
+                {/* Upper ticket stub */}
+                <div className="p-4 sm:p-5 pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono text-slate-400">
+                          {tiq.id}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-white mt-1 truncate font-display">
                         {tiq.cliente_nombre || 'Cliente sin nombre'}
-                      </h4>
+                      </h3>
                     </div>
 
+                    {/* Stamp badge */}
                     <span
-                      className={`text-[11px] px-2.5 py-1 rounded-full font-extrabold uppercase tracking-wider border ${
+                      className={`text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider border shrink-0 ${
                         isPendiente
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                          ? 'bg-[#e5a93c]/15 text-[#e5a93c] border-[#e5a93c]/30'
                           : isActiva
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                          : 'bg-slate-700/20 text-slate-400 border-slate-700/40'
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          : 'bg-slate-800 text-slate-400 border-slate-700'
                       }`}
                     >
-                      {tiq.estado}
+                      {isPendiente ? 'Por Activar' : isActiva ? 'En Uso' : 'Agotada'}
                     </span>
-                  </div>
-
-                  {/* Lunch balance progress */}
-                  <div className="space-y-1.5 py-2">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-slate-400">Almuerzos Disponibles:</span>
-                      <span className="text-white font-bold">
-                        {tiq.almuerzos_disponibles} / {tiq.total_almuerzos}
-                      </span>
-                    </div>
-
-                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${
-                          isFinalizada
-                            ? 'bg-slate-600'
-                            : 'bg-gradient-to-r from-orange-500 to-amber-400'
-                        }`}
-                        style={{
-                          width: `${(tiq.almuerzos_disponibles / tiq.total_almuerzos) * 100}%`,
-                        }}
-                      />
-                    </div>
                   </div>
                 </div>
 
-                {/* Footer action */}
-                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
-                  {isPendiente ? (
-                    <button
-                      onClick={() => handleOpenCodeModal(tiq)}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 transition-all cursor-pointer"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      Entregar Código de Activación
-                    </button>
-                  ) : (
-                    <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-slate-500" />
-                      Creada: {tiq.createdAt?.slice(0, 10)}
-                    </span>
-                  )}
+                {/* Perforation divider tear line */}
+                <div className="ticket-divider">
+                  <div className="ticket-dashed-line" />
+                </div>
+
+                {/* Lower ticket stub (Lunch balance & details) */}
+                <div className="p-4 sm:p-5 pt-3">
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Utensils className="w-3 h-3 text-slate-400" />
+                        Saldo de almuerzos:
+                      </span>
+                      <span className="font-mono font-bold text-white">
+                        <span className="text-[#e5a93c]">{tiq.almuerzos_disponibles}</span>
+                        <span className="text-slate-500"> / </span>
+                        <span>{tiq.total_almuerzos}</span>
+                      </span>
+                    </div>
+
+                    {/* Progress visualizer */}
+                    <div className="w-full h-2 bg-[#0e1015] rounded-full overflow-hidden border border-[#252b36]">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          isFinalizada
+                            ? 'bg-slate-600'
+                            : isPendiente
+                            ? 'bg-[#e5a93c]'
+                            : 'bg-emerald-400'
+                        }`}
+                        style={{ width: `${percentAvailable}%` }}
+                      />
+                    </div>
+
+                    {/* Mini lunch punch-tokens (up to 15) */}
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {Array.from({ length: Math.min(tiq.total_almuerzos, 15) }).map((_, idx) => {
+                        const isAvailable = idx < tiq.almuerzos_disponibles;
+                        return (
+                          <span
+                            key={idx}
+                            title={`Almuerzo ${idx + 1}`}
+                            className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                              isAvailable
+                                ? isPendiente
+                                  ? 'bg-[#e5a93c]/80'
+                                  : 'bg-emerald-400'
+                                : 'bg-[#252b36] border border-slate-700/50'
+                            }`}
+                          />
+                        );
+                      })}
+                      {tiq.total_almuerzos > 15 && (
+                        <span className="text-[10px] text-slate-400 font-mono self-center">
+                          +{tiq.total_almuerzos - 15}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card bottom action */}
+                  <div className="pt-3 border-t border-[#232835]">
+                    {isPendiente ? (
+                      <button
+                        onClick={() => handleOpenCodeModal(tiq)}
+                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-[#e5a93c]/15 text-[#e5a93c] hover:bg-[#e5a93c] hover:text-[#0e1015] border border-[#e5a93c]/40 transition-all cursor-pointer touch-press"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>Entregar Código de Activación</span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between text-xs text-slate-400">
+                        <span className="flex items-center gap-1 text-[11px]">
+                          <Clock className="w-3 h-3 text-slate-400" />
+                          Emitida: {tiq.createdAt?.slice(0, 10)}
+                        </span>
+                        {isActiva && (
+                          <span className="text-emerald-400 font-medium text-[11px]">
+                            Consumiendo
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -389,30 +471,30 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
         </div>
       )}
 
-      {/* Modal: Crear Tiquetera (HU-R3) */}
+      {/* Modal: Crear Nueva Tiquetera */}
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="Crear Nueva Tiquetera (HU-R3)"
+        title="Emitir Nueva Tiquetera"
       >
-        <form onSubmit={handleCreateTiquetera} className="space-y-5">
+        <form onSubmit={handleCreateTiquetera} className="space-y-4">
           {createError && (
-            <div className="p-3.5 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-300 text-xs">
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
               {createError}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-              Cliente Asociado *
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Cliente titular *
             </label>
             <select
               value={selectedClienteId}
               onChange={(e) => setSelectedClienteId(e.target.value)}
               required
-              className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              className="w-full bg-[#0e1015] border border-[#272d3b] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#e0533c] focus:ring-1 focus:ring-[#e0533c]"
             >
-              <option value="">Selecciona un cliente...</option>
+              <option value="">Selecciona un cliente del directorio...</option>
               {clientes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nombre} (ID: {c.identificacion})
@@ -420,31 +502,31 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
               ))}
             </select>
             {clientes.length === 0 && (
-              <p className="text-[11px] text-amber-400 mt-1">
-                ⚠️ Primero debes registrar al menos un cliente en la pestaña Clientes.
+              <p className="text-[11px] text-[#e5a93c] mt-1.5">
+                Debes registrar comensales en la pestaña Clientes para poder emitirles una tiquetera.
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-              Total de Almuerzos Adquiridos *
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Total de almuerzos adquiridos *
             </label>
 
-            {/* Quick buttons */}
+            {/* Quick Presets */}
             <div className="grid grid-cols-4 gap-2 mb-2">
               {[10, 15, 20, 30].map((num) => (
                 <button
                   type="button"
                   key={num}
                   onClick={() => setTotalAlmuerzos(num)}
-                  className={`py-2 rounded-xl text-xs font-bold border transition-all ${
-                    totalAlmuerzos === num
-                      ? 'bg-orange-500/20 border-orange-500 text-orange-300'
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                  className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    Number(totalAlmuerzos) === num
+                      ? 'bg-[#e0533c]/20 border-[#e0533c] text-white'
+                      : 'bg-[#0e1015] border-[#252a36] text-slate-400 hover:text-white'
                   }`}
                 >
-                  {num} almuerzos
+                  {num} comidas
                 </button>
               ))}
             </div>
@@ -456,76 +538,75 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
               onChange={(e) => setTotalAlmuerzos(e.target.value)}
               placeholder="O ingresa un número personalizado..."
               required
-              className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              className="w-full bg-[#0e1015] border border-[#272d3b] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#e0533c] focus:ring-1 focus:ring-[#e0533c]"
             />
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 space-y-1">
+          <div className="p-3 rounded-xl bg-[#0e1015] border border-[#242936] text-xs text-slate-400 space-y-1">
             <p className="font-semibold text-slate-300 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
-              Ciclo de Vida de la Tiquetera:
+              <Clock className="w-3.5 h-3.5 text-[#e5a93c]" />
+              Activación y Entrega:
             </p>
-            <p>• Nace en estado <strong>PENDIENTE</strong> con código aleatorio de 6 dígitos.</p>
-            <p>• El código de activación tiene una validez de <strong>48 horas</strong>.</p>
-            <p>• El cliente la activará desde cualquier navegador creando su PIN personal.</p>
+            <p>• La tiquetera se genera con un código único de 6 dígitos.</p>
+            <p>• El comensal tiene 48 horas para activarla y definir su PIN.</p>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#232835]">
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(false)}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={creating || clientes.length === 0}
-              className="px-5 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-slate-950 shadow-md shadow-orange-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#e0533c] hover:bg-[#c94530] text-white shadow-md shadow-[#e0533c]/20 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 touch-press"
             >
-              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
+              {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ticket className="w-3.5 h-3.5" />}
               Generar Tiquetera
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Modal: Entrega de Código de Activación (HU-R12) */}
+      {/* Modal: Entrega de Código de Activación */}
       <Modal
         isOpen={Boolean(codeModalData)}
         onClose={() => setCodeModalData(null)}
-        title="Código de Activación para el Cliente (HU-R12)"
+        title="Código de Activación del Pase"
       >
         {codeModalData && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div className="text-center">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                Cliente: {codeModalData.clienteNombre}
+              <span className="text-xs text-slate-400 font-semibold block">
+                Comensal: <strong className="text-white">{codeModalData.clienteNombre}</strong>
               </span>
 
-              {/* 6-Digit Big Code Badge */}
-              <div className="my-4 py-5 px-6 rounded-2xl bg-gradient-to-b from-slate-950 to-slate-900 border-2 border-dashed border-amber-500/50 shadow-inner flex flex-col items-center justify-center gap-1">
-                <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">
-                  Código de Activación (6 dígitos)
+              {/* Big 6-Digit Code Voucher Card */}
+              <div className="my-3.5 py-5 px-4 sm:px-6 rounded-2xl bg-[#0e1015] border border-[#e5a93c]/40 shadow-inner flex flex-col items-center justify-center gap-1">
+                <span className="text-[10px] font-bold text-[#e5a93c] tracking-widest uppercase">
+                  Código de Activación
                 </span>
-                <span className="text-4xl sm:text-5xl font-mono font-black text-white tracking-widest text-shadow">
+                <span className="text-4xl sm:text-5xl font-mono font-bold text-white tracking-widest py-1">
                   {codeModalData.codigo}
                 </span>
                 <span className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-amber-400" />
+                  <Clock className="w-3.5 h-3.5 text-[#e5a93c]" />
                   Válido por 48 horas (Vence: {codeModalData.fechaExpiracion?.slice(0, 16).replace('T', ' ')})
                 </span>
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Quick Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 onClick={() => handleCopyCode(codeModalData.codigo)}
-                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all cursor-pointer border ${
+                className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer border touch-press ${
                   copied
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20'
-                    : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
+                    ? 'bg-emerald-500 text-[#0e1015] border-emerald-400'
+                    : 'bg-[#202533] hover:bg-[#2b3244] text-white border-[#2d3547]'
                 }`}
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -534,25 +615,25 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
 
               <button
                 onClick={handleShareWhatsApp}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold bg-[#128c7e] hover:bg-[#075e54] text-white shadow-md shadow-[#128c7e]/20 transition-all cursor-pointer touch-press"
               >
                 <MessageCircle className="w-4 h-4" />
-                Compartir por WhatsApp
+                <span>Enviar por WhatsApp</span>
               </button>
             </div>
 
-            {/* Re-issue expired code option */}
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-slate-400">
-                ¿Código vencido o no entregado?
+            {/* Reissue Expired Code Option */}
+            <div className="pt-3.5 border-t border-[#232835] flex items-center justify-between text-xs">
+              <span className="text-slate-400 text-[11px]">
+                ¿Código expirado o no recibido?
               </span>
 
               <button
                 onClick={handleReemitirCodigo}
                 disabled={reissuing}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#e5a93c] hover:text-[#f3be5d] transition-colors disabled:opacity-50 cursor-pointer"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${reissuing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3 h-3 ${reissuing ? 'animate-spin' : ''}`} />
                 Reemitir nuevo código
               </button>
             </div>

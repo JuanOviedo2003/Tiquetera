@@ -1,44 +1,155 @@
 @import "tailwindcss";
 
 :root {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  font-family: var(--font-body);
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
 }
 
-/* Custom smooth scrollbar */
+.font-mono, code, kbd {
+  font-family: var(--font-mono);
+}
+
+/* Safe area insets for mobile edge-to-edge screens */
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem));
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
+}
+
+/* Custom smooth dark scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #0e1015;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #232d3f;
+  background: #252b37;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374760;
+  background: #374152;
 }
 
-/* Glassmorphism helpers */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Surface cards & panels */
+.bistro-card {
+  background: #151821;
+  border: 1px solid #252a36;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
 }
 
-.glass-panel-elevated {
-  background: rgba(23, 33, 56, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+.bistro-card-elevated {
+  background: #181c26;
+  border: 1px solid #2e3544;
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* Ticket Physical Perforation & Notch aesthetics */
+.ticket-silhouette {
+  position: relative;
+  background: #161922;
+  border: 1px solid #292f3d;
+  border-radius: 1.25rem;
+  overflow: visible;
+}
+
+.ticket-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  margin: 0 -1.25rem;
+}
+
+.ticket-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 14px;
+  height: 20px;
+  background: #0e1015;
+  border-top-right-radius: 14px;
+  border-bottom-right-radius: 14px;
+  border: 1px solid #292f3d;
+  border-left: none;
+}
+
+.ticket-divider::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  width: 14px;
+  height: 20px;
+  background: #0e1015;
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+  border: 1px solid #292f3d;
+  border-right: none;
+}
+
+.ticket-dashed-line {
+  width: 100%;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    #2f3647,
+    #2f3647 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+/* Touch active feedback for mobile buttons */
+.touch-press {
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.touch-press:active {
+  transform: scale(0.97);
+}
+
+/* Mobile Toast keyframe animations */
+@keyframes toastSlideInTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastSlideInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-toast-top {
+  animation: toastSlideInTop 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-toast-bottom {
+  animation: toastSlideInBottom 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

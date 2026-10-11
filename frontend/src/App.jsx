@@ -14,7 +14,11 @@ function DashboardContent() {
   const [toast, setToast] = useState(null);
 
   const showToast = (toastData) => {
-    setToast(toastData);
+    // Generate unique id and clean timestamp to force fresh render and animations
+    setToast({
+      ...toastData,
+      id: Date.now(),
+    });
   };
 
   const handleEmitirTiquetera = (cliente) => {
@@ -27,10 +31,10 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-[#0e1015] text-[#f4f1ea] flex flex-col selection:bg-[#e0533c] selection:text-white">
       <Navbar activeTab={activeTab} onSelectTab={setActiveTab} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 pb-28 md:pb-10">
         {activeTab === 'tiqueteras' && (
           <TiqueterasView
             preselectedClient={preselectedClient}
@@ -51,9 +55,9 @@ function DashboardContent() {
         )}
       </main>
 
-      <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+      <footer className="hidden md:block border-t border-[#1f2430] py-5 text-center text-xs text-slate-400">
         <p>
-          Tiquetera — Sistema Web para Restaurantes · Sprint 1 (HU-R1, HU-R2, HU-R3, HU-R11, HU-R12)
+          Tiquetera — Sistema Operativo de Control de Almuerzos y Pases para Restaurante
         </p>
       </footer>
 
