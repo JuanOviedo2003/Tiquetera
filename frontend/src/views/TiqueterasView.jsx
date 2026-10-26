@@ -19,7 +19,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-export default function TiqueterasView({ preselectedClient, onClearPreselectedClient, onShowToast }) {
+export default function TiqueterasView({ preselectedClient, onClearPreselectedClient, onShowToast, onAbrirConsumo }) {
   const { restauranteId } = useAuth();
   const [tiqueteras, setTiqueteras] = useState([]);
   const [clientes, setClientes] = useState([]);
@@ -451,15 +451,26 @@ export default function TiqueterasView({ preselectedClient, onClearPreselectedCl
                         <span>Entregar Código de Activación</span>
                       </button>
                     ) : (
-                      <div className="flex items-center justify-between text-xs text-slate-400">
-                        <span className="flex items-center gap-1 text-[11px]">
-                          <Clock className="w-3 h-3 text-slate-400" />
-                          Emitida: {tiq.createdAt?.slice(0, 10)}
-                        </span>
-                        {isActiva && (
-                          <span className="text-emerald-400 font-medium text-[11px]">
-                            Consumiendo
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <span className="flex items-center gap-1 text-[11px]">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            Emitida: {tiq.createdAt?.slice(0, 10)}
                           </span>
+                          {isActiva && (
+                            <span className="text-emerald-400 font-medium text-[11px]">
+                              Consumiendo
+                            </span>
+                          )}
+                        </div>
+                        {isActiva && tiq.qr_token && onAbrirConsumo && (
+                          <button
+                            onClick={() => onAbrirConsumo(tiq.qr_token)}
+                            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500 hover:text-[#0e1015] border border-emerald-500/40 transition-all cursor-pointer touch-press"
+                          >
+                            <Utensils className="w-3.5 h-3.5" />
+                            <span>Registrar consumo</span>
+                          </button>
                         )}
                       </div>
                     )}
