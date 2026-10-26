@@ -1,11 +1,12 @@
 import { useAuth } from '../context/AuthContext';
-import { Ticket, Users, UserCheck, LogOut, UtensilsCrossed, Store } from 'lucide-react';
+import { Ticket, Users, UserCheck, LogOut, UtensilsCrossed, Store, ScanLine } from 'lucide-react';
 
 export default function Navbar({ activeTab, onSelectTab }) {
   const { user, logout } = useAuth();
 
   const navItems = [
     { id: 'tiqueteras', label: 'Tiqueteras', icon: Ticket, countLabel: 'Pases' },
+    { id: 'consumo', label: 'Consumo', icon: ScanLine, countLabel: 'Caja' },
     { id: 'clientes', label: 'Clientes', icon: Users, countLabel: 'Directorio' },
     { id: 'usuarios', label: 'Equipo', icon: UserCheck, countLabel: 'Turnos' },
   ];
@@ -95,7 +96,7 @@ export default function Navbar({ activeTab, onSelectTab }) {
         aria-label="Navegación móvil"
         className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#12151d]/95 border-t border-[#252a36] backdrop-blur-xl pb-safe"
       >
-        <div className="grid grid-cols-3 max-w-md mx-auto py-1">
+        <div className="grid grid-cols-4 max-w-md mx-auto py-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

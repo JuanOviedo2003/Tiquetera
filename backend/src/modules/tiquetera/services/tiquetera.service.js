@@ -175,8 +175,9 @@ export class TiqueteraService {
     }
 
     const cliente = ClienteEntity.findById(tiquetera.cliente_id);
+    const { pin_hash: _pinHash, ...tiqueteraSinPin } = tiquetera;
     return {
-      ...tiquetera,
+      ...tiqueteraSinPin,
       cliente_nombre: cliente ? cliente.nombre : null,
       cliente: cliente || null,
     };

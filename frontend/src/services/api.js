@@ -103,6 +103,75 @@ export const api = {
   },
 
   // ==========================================
+  // HU-R5: Apertura de tiquetera por QR
+  // ==========================================
+  async getTiqueteraByQr(qrToken) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/qr/${encodeURIComponent(qrToken)}`);
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R6: Validación de PIN del cliente
+  // ==========================================
+  async validarPin({ qr_token, pin }) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/validar-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qr_token, pin }),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R7: Rejilla de almuerzos
+  // ==========================================
+  async getRejilla(qrToken) {
+    const res = await fetch(`${API_BASE_URL}/rejilla/${encodeURIComponent(qrToken)}`);
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R8: Registro de consumo
+  // ==========================================
+  async registrarConsumo({ tiquetera_id, pin, usuario_id, cuadros_seleccionados }) {
+    const res = await fetch(`${API_BASE_URL}/consumos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tiquetera_id,
+        pin,
+        usuario_id,
+        cantidad: cuadros_seleccionados.length,
+        cuadros_seleccionados,
+      }),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R9: Corrección de consumo del mismo día
+  // ==========================================
+  async revertirConsumo({ consumo_id, usuario_id, cuadro_deseleccionado, motivo }) {
+    const res = await fetch(`${API_BASE_URL}/consumos/reversa`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ consumo_id, usuario_id, cuadro_deseleccionado, motivo }),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R10: Historial de movimientos
+  // ==========================================
+  async getHistorial(tiqueteraId, fecha) {
+    const query = fecha ? `?fecha=${encodeURIComponent(fecha)}` : '';
+    const res = await fetch(
+      `${API_BASE_URL}/consumos/tiquetera/${encodeURIComponent(tiqueteraId)}${query}`
+    );
+    return handleResponse(res);
+  },
+
+  // ==========================================
   // HU-R11: Gestión de Usuarios del Restaurante
   // ==========================================
   async getUsers() {

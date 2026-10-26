@@ -5,12 +5,14 @@ import Toast from './components/Toast';
 import LoginView from './views/LoginView';
 import TiqueterasView from './views/TiqueterasView';
 import ClientesView from './views/ClientesView';
+import ConsumoView from './views/ConsumoView';
 import UsuariosView from './views/UsuariosView';
 
 function DashboardContent() {
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('tiqueteras');
   const [preselectedClient, setPreselectedClient] = useState(null);
+  const [qrParaConsumo, setQrParaConsumo] = useState(null);
   const [toast, setToast] = useState(null);
 
   const showToast = (toastData) => {
@@ -26,6 +28,11 @@ function DashboardContent() {
     setActiveTab('tiqueteras');
   };
 
+  const handleAbrirConsumo = (qrToken) => {
+    setQrParaConsumo(qrToken);
+    setActiveTab('consumo');
+  };
+
   if (!isAuthenticated) {
     return <LoginView />;
   }
@@ -39,6 +46,15 @@ function DashboardContent() {
           <TiqueterasView
             preselectedClient={preselectedClient}
             onClearPreselectedClient={() => setPreselectedClient(null)}
+            onShowToast={showToast}
+            onAbrirConsumo={handleAbrirConsumo}
+          />
+        )}
+
+        {activeTab === 'consumo' && (
+          <ConsumoView
+            initialQrToken={qrParaConsumo}
+            onClearInitialQr={() => setQrParaConsumo(null)}
             onShowToast={showToast}
           />
         )}
