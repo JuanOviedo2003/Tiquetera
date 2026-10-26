@@ -1,13 +1,13 @@
 services:
   mongo:
     image: mongo:7.0
-    container_name: tiquetera-mongodb
+    container_name: tiquetera-mongodb-dev
     restart: unless-stopped
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongo_data_dev:/data/db
     healthcheck:
       test:
         - "CMD-SHELL"
@@ -17,16 +17,16 @@ services:
       retries: 20
       start_period: 5s
     networks:
-      - tiquetera-net
+      - tiquetera-net-dev
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: tiquetera-backend
+    container_name: tiquetera-backend-dev
     restart: unless-stopped
     ports:
-      - "3001:3000"
+      - "7001:3000"
     depends_on:
       mongo:
         condition: service_healthy
@@ -35,29 +35,29 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=mongodb://mongo:27017/tiquetera?replicaSet=rs0&directConnection=true
     volumes:
-      - backend_data:/app/data
+      - backend_data_dev:/app/data
     networks:
-      - tiquetera-net
+      - tiquetera-net-dev
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: tiquetera-frontend
+    container_name: tiquetera-frontend-dev
     restart: unless-stopped
     ports:
-      - "8081:80"
+      - "9081:80"
     depends_on:
       - backend
     networks:
-      - tiquetera-net
+      - tiquetera-net-dev
 
 volumes:
-  mongo_data:
+  mongo_data_dev:
     driver: local
-  backend_data:
+  backend_data_dev:
     driver: local
 
 networks:
-  tiquetera-net:
+  tiquetera-net-dev:
     driver: bridge
