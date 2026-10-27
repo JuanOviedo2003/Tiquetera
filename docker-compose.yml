@@ -3,9 +3,9 @@ services:
     image: mongo:7.0
     container_name: tiquetera-mongodb
     restart: unless-stopped
-    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    command: [ "--replSet", "rs0", "--bind_ip_all", "--port", "27017" ]
     ports:
-      - "27017:27017"
+      - "27018:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
