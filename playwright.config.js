@@ -4,23 +4,23 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests-e2e',
 
-  fullyParallel: true,
-
-  reporter: 'html',
+  reporter: [
+    ['html', { open: 'always' }]
+  ],
 
   use: {
     baseURL: 'http://localhost:5173',
-    headless: true,
-    screenshot: 'only-on-failure',
-    trace: 'on-first-retry',
-  },
 
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        browserName: 'chromium',
-      },
-    },
-  ],
+    // Abrir el navegador visible
+    headless: false,
+
+    // Capturas de pantalla de todas las pruebas
+    screenshot: 'on',
+
+    // Grabar video de todas las pruebas
+    video: 'on',
+
+    // Guardar trazas para analizar las pruebas
+    trace: 'on'
+  }
 });
