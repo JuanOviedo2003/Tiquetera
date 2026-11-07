@@ -22,9 +22,9 @@ export default class TiqueteraEntity {
       INSERT INTO tiqueteras (
         id, cliente_id, restaurante_id, total_almuerzos, almuerzos_consumidos,
         almuerzos_disponibles, estado, codigo_activacion, fecha_expiracion_codigo,
-        codigo_usado, qr_token, pin_hash, intentos_fallidos_pin, bloqueado_hasta,
+        codigo_usado, qr_token, pin_hash, pin_actual, intentos_fallidos_pin, bloqueado_hasta,
         fecha_activacion, fecha_finalizacion, fecha_regeneracion_pin, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       String(data.cliente_id),
@@ -38,6 +38,7 @@ export default class TiqueteraEntity {
       data.codigo_usado ? 1 : 0,
       data.qr_token || null,
       data.pin_hash || null,
+      data.pin_actual || null,
       Number(data.intentos_fallidos_pin || 0),
       data.bloqueado_hasta || null,
       data.fecha_activacion || null,
@@ -144,11 +145,54 @@ export default class TiqueteraEntity {
 
   static deleteOne(id) {
     if (!id) return false;
+    db.prepare('DELETE FROM movimientos WHERE tiquetera_id = ?').run(String(id));
+    db.prepare('DELETE FROM pin_historial WHERE tiquetera_id = ?').run(String(id));
     const result = db.prepare('DELETE FROM tiqueteras WHERE id = ?').run(String(id));
     return result.changes > 0;
   }
 
+  static recordPinHistory(data) {
+    const id = String(data.id || `PINH-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
+    const fechaHora = data.fecha_hora || new Date().toISOString();
+
+    db.prepare(`
+      INSERT INTO pin_historial (
+        id, tiquetera_id, restaurante_id, cliente_id, pin_anterior, pin_nuevo, origen, fecha_hora
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id,
+      String(data.tiquetera_id),
+      data.restaurante_id ? String(data.restaurante_id) : null,
+      data.cliente_id ? String(data.cliente_id) : null,
+      data.pin_anterior ? String(data.pin_anterior) : null,
+      String(data.pin_nuevo),
+      data.origen || 'CLIENTE',
+      fechaHora
+    );
+
+    return db.prepare('SELECT * FROM pin_historial WHERE id = ?').get(id);
+  }
+
+  static findPinHistory(filters = {}) {
+    let query = 'SELECT * FROM pin_historial WHERE 1=1';
+    const params = [];
+
+    if (filters.tiquetera_id) {
+      query += ' AND tiquetera_id = ?';
+      params.push(String(filters.tiquetera_id));
+    }
+
+    if (filters.restaurante_id) {
+      query += ' AND restaurante_id = ?';
+      params.push(String(filters.restaurante_id));
+    }
+
+    query += ' ORDER BY fecha_hora DESC';
+    return db.prepare(query).all(...params);
+  }
+
   static clearAll() {
+    db.prepare('DELETE FROM pin_historial').run();
     db.prepare('DELETE FROM tiqueteras').run();
   }
 }
