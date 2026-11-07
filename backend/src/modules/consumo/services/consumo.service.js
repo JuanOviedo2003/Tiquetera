@@ -216,6 +216,29 @@ export class ConsumoService {
       throw error;
     }
 
+    // Cuadros de este consumo que ya tienen una reversa (cada cuadro se revierte una sola vez)
+    const cuadrosYaRevertidos = new Set(
+      reversasPrevias.flatMap((r) => r.cuadros_seleccionados || []).map(Number)
+    );
+    const cuadrosOriginales = (consumoOriginal.cuadros_seleccionados || []).map(Number);
+
+    if (cuadro_deseleccionado !== null) {
+      const cuadro = Number(cuadro_deseleccionado);
+
+      if (cuadrosOriginales.length > 0 && !cuadrosOriginales.includes(cuadro)) {
+        const error = new Error(`El cuadro ${cuadro} no pertenece a este consumo`);
+        error.status = 400;
+        throw error;
+      }
+
+      if (cuadrosYaRevertidos.has(cuadro)) {
+        const error = new Error(`El cuadro ${cuadro} ya fue revertido`);
+        error.status = 400;
+        throw error;
+      }
+    }
+
+    const cuadrosPendientes = cuadrosOriginales.filter((c) => !cuadrosYaRevertidos.has(c));
     const cantidadRevertir = cuadro_deseleccionado !== null ? 1 : (consumoOriginal.cantidad - cantidadYaRevertida);
 
     // Actualizar tiquetera
@@ -255,7 +278,7 @@ export class ConsumoService {
       saldo_posterior: nuevosDisponibles,
       cuadros_seleccionados: cuadro_deseleccionado !== null
         ? [cuadro_deseleccionado]
-        : (consumoOriginal.cuadros_seleccionados || []),
+        : cuadrosPendientes,
     });
 
     return {

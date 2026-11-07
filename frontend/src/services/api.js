@@ -67,6 +67,7 @@ export const api = {
     if (filters.cliente_nombre) params.append('cliente_nombre', filters.cliente_nombre);
     if (filters.estado) params.append('estado', filters.estado);
     if (filters.fecha_creacion) params.append('fecha_creacion', filters.fecha_creacion);
+    if (filters.restaurante_id) params.append('restaurante_id', filters.restaurante_id);
 
     const queryString = params.toString() ? `?${params.toString()}` : '';
     const res = await fetch(`${API_BASE_URL}/tiqueteras${queryString}`);
@@ -82,6 +83,13 @@ export const api = {
         total_almuerzos: Number(total_almuerzos),
         restaurante_id,
       }),
+    });
+    return handleResponse(res);
+  },
+
+  async deleteTiquetera(id) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
     });
     return handleResponse(res);
   },
@@ -103,19 +111,137 @@ export const api = {
   },
 
   // ==========================================
-  // HU-R11: Gestión de Usuarios del Restaurante
+  // HU-R5: Apertura de tiquetera por QR
   // ==========================================
-  async getUsers() {
-    const res = await fetch(`${API_BASE_URL}/users`);
+  async getTiqueteraByQr(qrToken) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/qr/${encodeURIComponent(qrToken)}`);
     return handleResponse(res);
   },
 
-  async createUser({ name, email, password }) {
+  // ==========================================
+  // HU-R6: Validación de PIN del cliente
+  // ==========================================
+  async validarPin({ qr_token, pin }) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/validar-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qr_token, pin }),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R7: Rejilla de almuerzos
+  // ==========================================
+  async getRejilla(qrToken) {
+    const res = await fetch(`${API_BASE_URL}/rejilla/${encodeURIComponent(qrToken)}`);
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R8: Registro de consumo
+  // ==========================================
+  async registrarConsumo({ tiquetera_id, pin, usuario_id, cuadros_seleccionados }) {
+    const res = await fetch(`${API_BASE_URL}/consumos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tiquetera_id,
+        pin,
+        usuario_id,
+        cantidad: cuadros_seleccionados.length,
+        cuadros_seleccionados,
+      }),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R9: Corrección de consumo del mismo día
+  // ==========================================
+  async revertirConsumo({ consumo_id, usuario_id, cuadro_deseleccionado, motivo }) {
+    const res = await fetch(`${API_BASE_URL}/consumos/reversa`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ consumo_id, usuario_id, cuadro_deseleccionado, motivo }),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R10: Historial de movimientos
+  // ==========================================
+  async getHistorial(tiqueteraId, fecha) {
+    const query = fecha ? `?fecha=${encodeURIComponent(fecha)}` : '';
+    const res = await fetch(
+      `${API_BASE_URL}/consumos/tiquetera/${encodeURIComponent(tiqueteraId)}${query}`
+    );
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-R11: Gestión de Usuarios del Restaurante y Superusuario
+  // ==========================================
+  async getUsers(restauranteId) {
+    const query = restauranteId
+      ? `?restaurante_id=${encodeURIComponent(restauranteId)}`
+      : '';
+    const res = await fetch(`${API_BASE_URL}/users${query}`);
+    return handleResponse(res);
+  },
+
+  async createUser({ name, email, password, restaurante_id }) {
     const res = await fetch(`${API_BASE_URL}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, restaurante_id }),
+    });
+    return handleResponse(res);
+  },
+
+  async getRestaurantes() {
+    const res = await fetch(`${API_BASE_URL}/users/restaurantes`);
+    return handleResponse(res);
+  },
+
+  async createRestaurante({ name, email, password }) {
+    const res = await fetch(`${API_BASE_URL}/users/restaurantes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),
     });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-C1 & HU-C2: Activación de Tiquetera y Creación de PIN
+  // ==========================================
+  async activarTiquetera({ codigo_activacion, pin }) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/activar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codigo_activacion, pin }),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-C3: Regeneración de PIN del Cliente
+  // ==========================================
+  async regenerarPin({ qr_token, nuevo_pin }) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/regenerar-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qr_token, nuevo_pin }),
+    });
+    return handleResponse(res);
+  },
+
+  // ==========================================
+  // HU-C4 & HU-C5: Vista Pública de Saldo e Historial por QR
+  // ==========================================
+  async getVistaPublica(qrToken) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/public/qr/${encodeURIComponent(qrToken)}`);
     return handleResponse(res);
   },
 };

@@ -175,8 +175,9 @@ export class TiqueteraService {
     }
 
     const cliente = ClienteEntity.findById(tiquetera.cliente_id);
+    const { pin_hash: _pinHash, ...tiqueteraSinPin } = tiquetera;
     return {
-      ...tiquetera,
+      ...tiqueteraSinPin,
       cliente_nombre: cliente ? cliente.nombre : null,
       cliente: cliente || null,
     };
@@ -390,12 +391,12 @@ export class TiqueteraService {
    * HU-R4: Consulta y filtrado de tiqueteras
    * RF-17: filtros por nombre de cliente, estado y fecha de creación (YYYY-MM-DD).
    */
-  getAllTiqueteras({ cliente_id, cliente_nombre, estado, fecha_creacion } = {}) {
+  getAllTiqueteras({ cliente_id, cliente_nombre, estado, fecha_creacion, restaurante_id } = {}) {
     if (fecha_creacion && !/^\d{4}-\d{2}-\d{2}$/.test(fecha_creacion)) {
       throw new Error("La fecha de creación debe tener el formato YYYY-MM-DD");
     }
 
-    const filtros = { cliente_id, estado, fecha_creacion };
+    const filtros = { cliente_id, estado, fecha_creacion, restaurante_id };
 
     if (cliente_nombre) {
       const nombreBuscado = cliente_nombre.trim().toLowerCase();
@@ -411,5 +412,32 @@ export class TiqueteraService {
         cliente_nombre: cliente ? cliente.nombre : null,
       };
     });
+  }
+
+  /**
+   * Eliminar una tiquetera si se encuentra en estado PENDIENTE o FINALIZADA.
+   * Las tiqueteras en estado ACTIVA (en uso) no pueden eliminarse.
+   */
+  deleteTiquetera(id) {
+    const tiquetera = TiqueteraEntity.findById(id);
+    if (!tiquetera) {
+      const error = new Error("Tiquetera no encontrada");
+      error.status = 404;
+      throw error;
+    }
+
+    if (tiquetera.estado === "ACTIVA") {
+      const error = new Error(
+        "No se puede eliminar una tiquetera en estado ACTIVA porque se encuentra en uso. Solo se pueden eliminar tiqueteras por activar (PENDIENTE) o agotadas (FINALIZADA)."
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    TiqueteraEntity.deleteOne(tiquetera.id);
+    return {
+      mensaje: "Tiquetera eliminada exitosamente",
+      id: tiquetera.id,
+    };
   }
 }

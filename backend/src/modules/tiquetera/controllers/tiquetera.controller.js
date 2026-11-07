@@ -34,12 +34,13 @@ export default class TiqueteraController {
    */
   listar = (req, res) => {
     try {
-      const { cliente_id, cliente_nombre, estado, fecha_creacion } = req.query;
+      const { cliente_id, cliente_nombre, estado, fecha_creacion, restaurante_id } = req.query;
       const tiqueteras = this.tiqueteraService.getAllTiqueteras({
         cliente_id,
         cliente_nombre,
         estado,
         fecha_creacion,
+        restaurante_id,
       });
       return res.json(tiqueteras);
     } catch (error) {
@@ -181,6 +182,21 @@ export default class TiqueteraController {
       return res.json(vista);
     } catch (error) {
       const statusCode = error.status || 404;
+      return res.status(statusCode).json({ error: error.message });
+    }
+  };
+
+  /**
+   * Eliminar tiquetera en estado PENDIENTE
+   * DELETE /api/tiqueteras/:id
+   */
+  eliminar = (req, res) => {
+    try {
+      const { id } = req.params;
+      const resultado = this.tiqueteraService.deleteTiquetera(id);
+      return res.json(resultado);
+    } catch (error) {
+      const statusCode = error.status || 400;
       return res.status(statusCode).json({ error: error.message });
     }
   };

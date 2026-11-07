@@ -328,3 +328,85 @@ describe("HU-R8: Registro de Consumo", () => {
     );
   });
 });
+
+describe("HU-R9: Reversa de consumo por cuadro", () => {
+  let consumoService;
+  let tiquetera;
+  let consumo;
+
+  beforeEach(() => {
+    TiqueteraEntity.clearAll();
+    ConsumoEntity.clearAll();
+    const tiqueteraService = new TiqueteraService();
+    consumoService = new ConsumoService();
+
+    const creada = tiqueteraService.createTiquetera({
+      cliente_id: "CLI-020",
+      total_almuerzos: 10,
+      restaurante_id: "REST-1",
+    });
+    tiquetera = tiqueteraService.activarTiquetera({
+      codigo_activacion: creada.codigo_activacion,
+      pin: "123456",
+    });
+
+    consumo = consumoService.registrarConsumo({
+      tiquetera_id: tiquetera.id,
+      pin: "123456",
+      cantidad: 3,
+      usuario_id: "USR-1",
+      cuadros_seleccionados: [1, 2, 3],
+    }).movimiento;
+  });
+
+  const revertir = (extra = {}) =>
+    consumoService.revertirConsumo({ consumo_id: consumo.id, usuario_id: "USR-1", ...extra });
+
+  it("debe revertir un cuadro y restaurar solo un almuerzo", () => {
+    const { tiquetera: actualizada, movimiento } = revertir({ cuadro_deseleccionado: 2 });
+
+    assert.equal(movimiento.tipo, "REVERSA");
+    assert.deepEqual(movimiento.cuadros_seleccionados, [2]);
+    assert.equal(actualizada.almuerzos_disponibles, 8);
+    assert.equal(actualizada.almuerzos_consumidos, 2);
+  });
+
+  it("debe rechazar revertir dos veces el mismo cuadro sin alterar el saldo", () => {
+    revertir({ cuadro_deseleccionado: 2 });
+
+    assert.throws(
+      () => revertir({ cuadro_deseleccionado: 2 }),
+      (error) => {
+        assert.equal(error.status, 400);
+        assert.match(error.message, /ya fue revertido/);
+        return true;
+      }
+    );
+
+    const actual = TiqueteraEntity.findById(tiquetera.id);
+    assert.equal(actual.almuerzos_disponibles, 8);
+    assert.equal(actual.almuerzos_consumidos, 2);
+  });
+
+  it("debe rechazar revertir un cuadro que no pertenece al consumo", () => {
+    assert.throws(
+      () => revertir({ cuadro_deseleccionado: 7 }),
+      (error) => {
+        assert.equal(error.status, 400);
+        assert.match(error.message, /no pertenece/);
+        return true;
+      }
+    );
+    assert.equal(TiqueteraEntity.findById(tiquetera.id).almuerzos_disponibles, 7);
+  });
+
+  it("una reversa total posterior a una parcial solo registra los cuadros pendientes", () => {
+    revertir({ cuadro_deseleccionado: 2 });
+    const { movimiento, tiquetera: actualizada } = revertir();
+
+    assert.equal(movimiento.cantidad, 2);
+    assert.deepEqual(movimiento.cuadros_seleccionados, [1, 3]);
+    assert.equal(actualizada.almuerzos_disponibles, 10);
+    assert.equal(actualizada.almuerzos_consumidos, 0);
+  });
+});

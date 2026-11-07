@@ -78,6 +78,11 @@ export default class TiqueteraEntity {
       params.push(String(filters.cliente_id));
     }
 
+    if (filters.restaurante_id) {
+      query += ' AND restaurante_id = ?';
+      params.push(String(filters.restaurante_id));
+    }
+
     if (filters.cliente_ids !== undefined) {
       const ids = filters.cliente_ids.map(String);
       if (ids.length === 0) {
@@ -135,6 +140,12 @@ export default class TiqueteraEntity {
 
     const updated = db.prepare('SELECT * FROM tiqueteras WHERE id = ?').get(String(id));
     return formatTiquetera(updated);
+  }
+
+  static deleteOne(id) {
+    if (!id) return false;
+    const result = db.prepare('DELETE FROM tiqueteras WHERE id = ?').run(String(id));
+    return result.changes > 0;
   }
 
   static clearAll() {

@@ -11,6 +11,8 @@ function formatUser(row) {
     password: row.password || undefined,
     role: row.role,
     rol: row.role,
+    restaurante_id: row.restaurante_id || null,
+    es_titular: Boolean(row.es_titular),
     active: Boolean(row.active),
     activo: Boolean(row.active),
     createdAt: row.createdAt,
@@ -18,8 +20,27 @@ function formatUser(row) {
 }
 
 export default class UserEntity {
-  static findMany() {
-    const rows = db.prepare('SELECT * FROM users ORDER BY createdAt DESC').all();
+  static findMany(filters = {}) {
+    let query = 'SELECT * FROM users WHERE 1=1';
+    const params = [];
+
+    if (filters.role) {
+      query += ' AND role = ?';
+      params.push(String(filters.role));
+    }
+
+    if (filters.restaurante_id) {
+      query += ' AND restaurante_id = ?';
+      params.push(String(filters.restaurante_id));
+    }
+
+    if (filters.es_titular !== undefined) {
+      query += ' AND es_titular = ?';
+      params.push(filters.es_titular ? 1 : 0);
+    }
+
+    query += ' ORDER BY createdAt DESC';
+    const rows = db.prepare(query).all(...params);
     return rows.map(formatUser);
   }
 
@@ -40,10 +61,11 @@ export default class UserEntity {
     const id = String(data.id || `USR-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
     const createdAt = data.createdAt || new Date().toISOString();
     const activeInt = data.active !== false ? 1 : 0;
+    const esTitularInt = data.es_titular ? 1 : 0;
 
     db.prepare(`
-      INSERT INTO users (id, name, email, passwordHash, password, role, active, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, name, email, passwordHash, password, role, restaurante_id, es_titular, active, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id,
       data.name,
@@ -51,6 +73,8 @@ export default class UserEntity {
       data.passwordHash || null,
       data.password || null,
       data.role || 'RESTAURANTE',
+      data.restaurante_id !== undefined ? data.restaurante_id : 'REST-1',
+      esTitularInt,
       activeInt,
       createdAt
     );
