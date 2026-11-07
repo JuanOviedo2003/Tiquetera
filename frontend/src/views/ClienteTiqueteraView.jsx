@@ -32,8 +32,9 @@ export default function ClienteTiqueteraView({
   const [error, setError] = useState(null);
   const [fechaFiltro, setFechaFiltro] = useState('');
 
-  // Modal HU-C3: Regenerar PIN
+  // Modal HU-C3: Regenerar PIN (requiere PIN anterior)
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [pinAnterior, setPinAnterior] = useState('');
   const [nuevoPin, setNuevoPin] = useState('');
   const [confirmarPin, setConfirmarPin] = useState('');
   const [pinError, setPinError] = useState(null);
@@ -63,7 +64,13 @@ export default function ClienteTiqueteraView({
 
   const handleRegenerarPin = async (e) => {
     e.preventDefault();
+    const cleanPinAnterior = pinAnterior.trim();
     const cleanPin = nuevoPin.trim();
+
+    if (!/^\d{6}$/.test(cleanPinAnterior)) {
+      setPinError('Debes ingresar tu PIN actual (anterior) de 6 dígitos.');
+      return;
+    }
 
     if (!/^\d{6}$/.test(cleanPin)) {
       setPinError('El nuevo PIN debe tener exactamente 6 dígitos numéricos.');
@@ -71,7 +78,7 @@ export default function ClienteTiqueteraView({
     }
 
     if (cleanPin !== confirmarPin.trim()) {
-      setPinError('Los PIN ingresados no coinciden. Verifica ambos campos.');
+      setPinError('El nuevo PIN y su confirmación no coinciden. Verifica ambos campos.');
       return;
     }
 
@@ -80,10 +87,12 @@ export default function ClienteTiqueteraView({
     try {
       await api.regenerarPin({
         qr_token: qrToken,
+        pin_anterior: cleanPinAnterior,
         nuevo_pin: cleanPin,
       });
 
       setIsPinModalOpen(false);
+      setPinAnterior('');
       setNuevoPin('');
       setConfirmarPin('');
 
@@ -100,6 +109,7 @@ export default function ClienteTiqueteraView({
   };
 
   const openPinModal = () => {
+    setPinAnterior('');
     setNuevoPin('');
     setConfirmarPin('');
     setPinError(null);
@@ -383,7 +393,9 @@ export default function ClienteTiqueteraView({
       >
         <form onSubmit={handleRegenerarPin} className="space-y-4">
           <p className="text-xs sm:text-sm text-[#333333]/80">
-            Define un nuevo PIN de 6 dígitos para autorizar tus consumos.{' '}
+            Por seguridad, ingresa primero tu{' '}
+            <strong className="text-[#333333]">PIN actual</strong> y luego define tu nuevo PIN de
+            6 dígitos.{' '}
             <strong className="text-[#FF6B47]">
               Tu PIN anterior dejará de funcionar de inmediato.
             </strong>
@@ -397,6 +409,28 @@ export default function ClienteTiqueteraView({
               {pinError}
             </div>
           )}
+
+          <div>
+            <label
+              htmlFor="regenerar-pin-anterior"
+              className="block text-xs font-semibold text-[#333333] mb-1.5"
+            >
+              PIN actual (anterior) de 6 dígitos *
+            </label>
+            <input
+              id="regenerar-pin-anterior"
+              type="password"
+              inputMode="numeric"
+              autoComplete="current-password"
+              maxLength={6}
+              value={pinAnterior}
+              onChange={(e) => setPinAnterior(e.target.value.replace(/\D/g, ''))}
+              placeholder="••••••"
+              required
+              autoFocus
+              className={`${inputClass} text-center text-2xl tracking-[0.4em] font-mono`}
+            />
+          </div>
 
           <div>
             <label
@@ -415,7 +449,6 @@ export default function ClienteTiqueteraView({
               onChange={(e) => setNuevoPin(e.target.value.replace(/\D/g, ''))}
               placeholder="••••••"
               required
-              autoFocus
               className={`${inputClass} text-center text-2xl tracking-[0.4em] font-mono`}
             />
           </div>
@@ -453,7 +486,12 @@ export default function ClienteTiqueteraView({
 
             <button
               type="submit"
-              disabled={regenerating || nuevoPin.length !== 6 || confirmarPin.length !== 6}
+              disabled={
+                regenerating ||
+                pinAnterior.length !== 6 ||
+                nuevoPin.length !== 6 ||
+                confirmarPin.length !== 6
+              }
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#FF6B47] hover:bg-[#E85A37] text-white shadow-md shadow-[#FF6B47]/25 transition-all cursor-pointer disabled:opacity-50 touch-press"
             >
               {regenerating ? (

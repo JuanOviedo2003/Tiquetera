@@ -40,6 +40,7 @@ export function initSchema() {
       role TEXT NOT NULL DEFAULT 'RESTAURANTE',
       restaurante_id TEXT,
       es_titular INTEGER NOT NULL DEFAULT 0,
+      precio_tiquetera REAL NOT NULL DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1,
       createdAt TEXT NOT NULL
     );
@@ -66,6 +67,7 @@ export function initSchema() {
       codigo_usado INTEGER NOT NULL DEFAULT 0,
       qr_token TEXT,
       pin_hash TEXT,
+      pin_actual TEXT,
       intentos_fallidos_pin INTEGER NOT NULL DEFAULT 0,
       bloqueado_hasta TEXT,
       fecha_activacion TEXT,
@@ -88,6 +90,17 @@ export function initSchema() {
       saldo_posterior INTEGER,
       cuadros_seleccionados TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS pin_historial (
+      id TEXT PRIMARY KEY,
+      tiquetera_id TEXT NOT NULL,
+      restaurante_id TEXT,
+      cliente_id TEXT,
+      pin_anterior TEXT,
+      pin_nuevo TEXT NOT NULL,
+      origen TEXT NOT NULL DEFAULT 'CLIENTE',
+      fecha_hora TEXT NOT NULL
+    );
   `);
 
   try {
@@ -98,6 +111,18 @@ export function initSchema() {
 
   try {
     db.exec(`ALTER TABLE users ADD COLUMN es_titular INTEGER NOT NULL DEFAULT 0;`);
+  } catch {
+    // Columna ya existe
+  }
+
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN precio_tiquetera REAL NOT NULL DEFAULT 0;`);
+  } catch {
+    // Columna ya existe
+  }
+
+  try {
+    db.exec(`ALTER TABLE tiqueteras ADD COLUMN pin_actual TEXT;`);
   } catch {
     // Columna ya existe
   }
