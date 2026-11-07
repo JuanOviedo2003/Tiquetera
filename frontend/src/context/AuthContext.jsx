@@ -31,8 +31,9 @@ export function AuthProvider({ children }) {
     try {
       const data = await api.login(email, password);
       const authUser = data.usuario || data.user || data;
-      // Asignar restaurante_id por defecto si no viene
-      if (!authUser.restaurante_id) {
+      const role = authUser.role || authUser.rol || 'RESTAURANTE';
+      // Asignar restaurante_id por defecto si es restaurante y no viene
+      if (role !== 'SUPER_ADMIN' && !authUser.restaurante_id) {
         authUser.restaurante_id = 'REST-1';
       }
       setUser(authUser);
@@ -50,9 +51,12 @@ export function AuthProvider({ children }) {
     setError(null);
   };
 
+  const isSuperAdmin = (user?.role || user?.rol) === 'SUPER_ADMIN';
+
   const value = {
     user,
     isAuthenticated: Boolean(user),
+    isSuperAdmin,
     loading,
     error,
     login,
