@@ -7,7 +7,7 @@ services:
     ports:
       - "27018:27017"
     volumes:
-      - mongo_data_dev:/data-dev/db
+      - mongo_data_dev:/data/db
     healthcheck:
       test:
         - "CMD-SHELL"
@@ -35,7 +35,7 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=mongodb://mongo:27017/tiquetera?replicaSet=rs0&directConnection=true
     volumes:
-      - backend_data_dev:/app-dev/data
+      - backend_data_dev:/app/data
     networks:
       - tiquetera-net-dev
 
@@ -46,7 +46,7 @@ services:
     container_name: tiquetera-frontend-dev
     restart: unless-stopped
     ports:
-      - "8081:80"
+      - "9081:80"
     depends_on:
       - backend
     networks:
@@ -59,5 +59,5 @@ volumes:
     driver: local
 
 networks:
-  tiquetera-net:
+  tiquetera-net-dev:
     driver: bridge
