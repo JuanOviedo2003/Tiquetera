@@ -30,6 +30,51 @@ export function buildActivacionUrl(codigo = '') {
 }
 
 /**
+ * Copia texto al portapapeles de forma compatible tanto en HTTPS/localhost
+ * como en orígenes HTTP (por ejemplo, IP de VPS sin certificado TLS).
+ */
+export async function copyToClipboard(text) {
+  const value = String(text ?? '');
+  if (!value) throw new Error('Texto vacío');
+
+  if (
+    typeof window !== 'undefined' &&
+    window.isSecureContext &&
+    typeof navigator !== 'undefined' &&
+    navigator.clipboard?.writeText
+  ) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // Continuar con respaldo clásico si falla Clipboard API
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '0';
+  textarea.style.left = '-9999px';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+
+  try {
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, value.length);
+    const copied = document.execCommand('copy');
+    if (!copied) {
+      throw new Error('No se pudo copiar al portapapeles');
+    }
+    return true;
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+/**
  * Renderiza un código QR estándar en el <canvas> usando la librería oficial `qrcode`,
  * con la paleta del Sistema de Diseño (#333333 Gris Grafito y #64829E Azul Pizarra).
  */
