@@ -1,14 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  /* Paleta Oficial — Sistema de Diseño Integral Tiquetera */
+  --color-primary: #FF6B47;       /* Naranja Cálido */
+  --color-primary-hover: #E85A37;
+  --color-bg: #F9F5F1;            /* Lino Crema */
+  --color-surface: #FFFFFF;       /* Superficie de tarjetas */
+  --color-text: #333333;          /* Gris Grafito Profundo */
+  --color-text-muted: #5E6A77;    /* Gris Pizarra Suave */
+  --color-slate-blue: #64829E;    /* Azul Pizarra (acentos, saldos, confirmación) */
+  --color-slate-blue-hover: #526E88;
+  --color-border: #E5DED4;        /* Borde cálido sutil */
+
+  /* Tipografía Oficial: Títulos en Poppins Semi-Bold, Cuerpo en Inter Regular */
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Poppins', system-ui, sans-serif;
   --font-mono: 'Space Mono', monospace;
+
   font-family: var(--font-body);
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--color-bg);
 }
 
-h1, h2, h3, h4, .font-display {
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: #F9F5F1;
+  color: #333333;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
   font-family: var(--font-display);
+  font-weight: 600;
+  color: #333333;
+  letter-spacing: -0.015em;
 }
 
 .font-mono, code, kbd {
@@ -24,47 +53,48 @@ h1, h2, h3, h4, .font-display {
   padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem));
 }
 
-/* Custom smooth dark scrollbar */
+/* Custom smooth warm scrollbar */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0e1015;
+  background: #F9F5F1;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #252b37;
+  background: #CFC7BC;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374152;
+  background: #64829E;
 }
 
-/* Surface cards & panels */
+/* Surface cards & panels — Calma, simplicidad y legibilidad */
 .bistro-card {
-  background: #151821;
-  border: 1px solid #252a36;
-  border-radius: 1rem;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  background: #FFFFFF;
+  border: 1px solid #E5DED4;
+  border-radius: 1.25rem;
+  box-shadow: 0 6px 22px -4px rgba(51, 51, 51, 0.06);
 }
 
 .bistro-card-elevated {
-  background: #181c26;
-  border: 1px solid #2e3544;
-  border-radius: 1.25rem;
-  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.6);
+  background: #FFFFFF;
+  border: 1px solid #DDD4C7;
+  border-radius: 1.5rem;
+  box-shadow: 0 12px 32px -6px rgba(51, 51, 51, 0.1);
 }
 
-/* Ticket Physical Perforation & Notch aesthetics */
+/* Tarjeta de Información de Saldo / Tiquetera con muescas laterales sobre Lino Crema */
 .ticket-silhouette {
   position: relative;
-  background: #161922;
-  border: 1px solid #292f3d;
-  border-radius: 1.25rem;
-  overflow: visible;
+  background: #FFFFFF;
+  border: 1px solid #E5DED4;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 26px -4px rgba(51, 51, 51, 0.07);
+  overflow: hidden;
 }
 
 .ticket-divider {
@@ -72,51 +102,51 @@ h1, h2, h3, h4, .font-display {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 20px;
-  margin: 0 -1.25rem;
+  height: 22px;
+  margin: 0;
 }
 
 .ticket-divider::before {
   content: '';
   position: absolute;
-  left: 0;
-  width: 14px;
-  height: 20px;
-  background: #0e1015;
+  left: -1px;
+  width: 13px;
+  height: 22px;
+  background: #F9F5F1;
   border-top-right-radius: 14px;
   border-bottom-right-radius: 14px;
-  border: 1px solid #292f3d;
+  border: 1px solid #E5DED4;
   border-left: none;
 }
 
 .ticket-divider::after {
   content: '';
   position: absolute;
-  right: 0;
-  width: 14px;
-  height: 20px;
-  background: #0e1015;
+  right: -1px;
+  width: 13px;
+  height: 22px;
+  background: #F9F5F1;
   border-top-left-radius: 14px;
   border-bottom-left-radius: 14px;
-  border: 1px solid #292f3d;
+  border: 1px solid #E5DED4;
   border-right: none;
 }
 
 .ticket-dashed-line {
-  width: 100%;
-  height: 1px;
+  width: calc(100% - 36px);
+  height: 2px;
   background: repeating-linear-gradient(
     90deg,
-    #2f3647,
-    #2f3647 6px,
+    #D6CEC2,
+    #D6CEC2 6px,
     transparent 6px,
     transparent 12px
   );
 }
 
-/* Touch active feedback for mobile buttons */
+/* Touch active feedback for mobile & desktop buttons */
 .touch-press {
-  transition: transform 0.12s ease, filter 0.12s ease;
+  transition: transform 0.12s ease, filter 0.12s ease, background-color 0.15s ease;
 }
 
 .touch-press:active {

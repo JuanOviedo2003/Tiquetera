@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { CheckCircle2, AlertTriangle, Info, X, Sparkles } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 
 export default function Toast({ toast, onClose }) {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -9,11 +9,9 @@ export default function Toast({ toast, onClose }) {
   const [isPaused, setIsPaused] = useState(false);
 
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
-  const timerRef = useRef(null);
   const startTimeRef = useRef(null);
   const totalDuration = 4500;
 
-  // Haptic feedback & auto-dismiss lifecycle
   useEffect(() => {
     if (!toast) {
       setProgress(100);
@@ -22,7 +20,6 @@ export default function Toast({ toast, onClose }) {
       return;
     }
 
-    // Trigger subtle mobile haptic feedback if available
     try {
       if (typeof window !== 'undefined' && navigator?.vibrate) {
         if (toast.type === 'error') {
@@ -32,7 +29,7 @@ export default function Toast({ toast, onClose }) {
         }
       }
     } catch {
-      // Ignore vibration errors on unsupported environments
+      // Ignorar si el navegador no soporta vibración
     }
 
     startTimeRef.current = Date.now();
@@ -70,7 +67,6 @@ export default function Toast({ toast, onClose }) {
     }, 220);
   };
 
-  // Touch gesture handling for mobile screens
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
     touchStartRef.current = {
@@ -88,9 +84,8 @@ export default function Toast({ toast, onClose }) {
     const diffX = touch.clientX - touchStartRef.current.x;
     const diffY = touch.clientY - touchStartRef.current.y;
 
-    // Mobile swipe up or swipe right dismissal
-    const nextY = diffY < 0 ? diffY : diffY * 0.25; // Resistance pulling down
-    const nextX = diffX > 0 ? diffX : diffX * 0.25; // Resistance pulling left
+    const nextY = diffY < 0 ? diffY : diffY * 0.25;
+    const nextX = diffX > 0 ? diffX : diffX * 0.25;
 
     setDragOffset({ x: nextX, y: nextY });
   };
@@ -99,18 +94,16 @@ export default function Toast({ toast, onClose }) {
     setIsDragging(false);
     setIsPaused(false);
 
-    // If swiped up > 35px or swiped right > 60px, dismiss
     if (dragOffset.y < -35 || dragOffset.x > 60) {
       handleDismiss();
     } else {
-      // Snap back smoothly
       setDragOffset({ x: 0, y: 0 });
     }
   };
 
   const title =
     toast.title ||
-    (isSuccess ? 'Confirmación del Sistema' : isError ? 'Atención Requerida' : 'Notificación de Servicio');
+    (isSuccess ? 'Confirmación' : isError ? 'Atención Requerida' : 'Notificación');
 
   return (
     <aside
@@ -130,69 +123,64 @@ export default function Toast({ toast, onClose }) {
           opacity: isExiting ? 0 : Math.max(0.4, 1 - Math.abs(dragOffset.y) / 100 - Math.abs(dragOffset.x) / 120),
           transition: isDragging ? 'none' : 'transform 0.22s ease-out, opacity 0.22s ease-out',
         }}
-        className={`pointer-events-auto relative overflow-hidden rounded-2xl border shadow-2xl backdrop-blur-xl bg-[#141720]/95 ${
+        className={`pointer-events-auto relative overflow-hidden rounded-2xl border shadow-xl backdrop-blur-xl bg-white/95 ${
           isSuccess
-            ? 'border-emerald-500/30 shadow-emerald-950/40'
+            ? 'border-[#64829E]/40 shadow-[#64829E]/15'
             : isError
-            ? 'border-rose-500/30 shadow-rose-950/40'
-            : 'border-amber-500/30 shadow-amber-950/40'
+            ? 'border-[#FF6B47]/50 shadow-[#FF6B47]/15'
+            : 'border-[#E5DED4] shadow-[#333333]/10'
         } ${isExiting ? 'scale-95' : 'animate-toast-top sm:animate-toast-bottom'}`}
       >
-        {/* Mobile drag handle hint */}
         <div className="flex sm:hidden justify-center pt-1.5 pb-0.5">
-          <div className="w-9 h-1 rounded-full bg-slate-600/50" />
+          <div className="w-9 h-1 rounded-full bg-[#64829E]/30" />
         </div>
 
         <div className="flex items-start gap-3.5 p-3.5 sm:p-4">
-          {/* Status Icon Badge */}
           <div
             className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border mt-0.5 ${
               isSuccess
-                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                ? 'bg-[#64829E]/15 border-[#64829E]/30 text-[#64829E]'
                 : isError
-                ? 'bg-rose-500/15 border-rose-500/30 text-rose-400'
-                : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+                ? 'bg-[#FF6B47]/15 border-[#FF6B47]/30 text-[#FF6B47]'
+                : 'bg-[#F9F5F1] border-[#E5DED4] text-[#64829E]'
             }`}
           >
-            {isSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
-            {isError && <AlertTriangle className="w-5 h-5 text-rose-400" />}
-            {!isSuccess && !isError && <Info className="w-5 h-5 text-amber-400" />}
+            {isSuccess && <CheckCircle2 className="w-5 h-5 text-[#64829E]" />}
+            {isError && <AlertTriangle className="w-5 h-5 text-[#FF6B47]" />}
+            {!isSuccess && !isError && <Info className="w-5 h-5 text-[#64829E]" />}
           </div>
 
-          {/* Text Message */}
           <div className="flex-1 min-w-0 pr-1">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold tracking-tight text-white font-display">
+              <span className="text-xs font-semibold tracking-tight text-[#333333] font-display">
                 {title}
               </span>
-              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
-                Justo ahora
+              <span className="text-[10px] text-[#64829E] font-mono hidden sm:inline">
+                Ahora
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-300 mt-0.5 leading-snug break-words">
+            <p className="text-xs sm:text-sm text-[#333333]/80 mt-0.5 leading-snug break-words">
               {toast.message}
             </p>
           </div>
 
-          {/* Close button with 44px minimum mobile hit area */}
           <button
             onClick={handleDismiss}
-            className="w-8 h-8 sm:w-7 sm:h-7 -mr-1 -mt-1 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+            className="w-8 h-8 sm:w-7 sm:h-7 -mr-1 -mt-1 flex items-center justify-center rounded-lg text-[#64829E] hover:text-[#333333] hover:bg-[#F9F5F1] active:scale-95 transition-all cursor-pointer"
             aria-label="Cerrar notificación"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Live progress countdown bar */}
-        <div className="w-full h-1 bg-slate-800/80 overflow-hidden">
+        <div className="w-full h-1 bg-[#F9F5F1] overflow-hidden">
           <div
             className={`h-full transition-all duration-75 ease-linear ${
               isSuccess
-                ? 'bg-emerald-400'
+                ? 'bg-[#64829E]'
                 : isError
-                ? 'bg-rose-400'
-                : 'bg-amber-400'
+                ? 'bg-[#FF6B47]'
+                : 'bg-[#64829E]'
             }`}
             style={{ width: `${progress}%` }}
           />

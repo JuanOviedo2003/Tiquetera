@@ -37,4 +37,7 @@ tiqueteraRouter.post("/:id/reemitir-codigo", tiqueteraController.reemitirCodigo)
 // Consulta por ID
 tiqueteraRouter.get("/:id", tiqueteraController.obtenerPorId);
 
+// Eliminación de tiquetera en estado PENDIENTE
+tiqueteraRouter.delete("/:id", tiqueteraController.eliminar);
+
 export default tiqueteraRouter;

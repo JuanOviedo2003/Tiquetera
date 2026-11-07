@@ -5,7 +5,7 @@ import Modal from '../components/Modal';
 import RejillaGrid from '../components/RejillaGrid';
 import HistorialMovimientos from '../components/HistorialMovimientos';
 import QrScanner from '../components/QrScanner';
-import { extractQrToken, isQrScanSupported } from '../utils/qr';
+import { extractQrToken } from '../utils/qr';
 import {
   QrCode,
   Camera,
@@ -19,6 +19,7 @@ import {
   ArrowRight,
   History,
   LayoutGrid,
+  CheckCircle2,
 } from 'lucide-react';
 
 /** Reconstruye qué consumo (id) sostiene cada cuadro hoy, aplicando las reversas en orden. */
@@ -59,40 +60,37 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
   const mapaCuadros = useMemo(() => cuadroAConsumo(movimientos), [movimientos]);
 
   // HU-R5: abrir la tiquetera a partir del token del QR
-  const abrirPorQr = useCallback(
-    async (rawToken) => {
-      const token = extractQrToken(rawToken);
-      if (!token) {
-        setQrError('Ingresa o escanea el token del QR de la tiquetera.');
+  const abrirPorQr = useCallback(async (rawToken) => {
+    const token = extractQrToken(rawToken);
+    if (!token) {
+      setQrError('Ingresa o escanea el token del QR de la tiquetera.');
+      return;
+    }
+    setScanning(false);
+    setLoading(true);
+    setQrError(null);
+    try {
+      const data = await api.getTiqueteraByQr(token);
+      if (data.estado !== 'ACTIVA') {
+        setQrError(
+          data.estado === 'FINALIZADA'
+            ? 'Esta tiquetera está FINALIZADA: no tiene almuerzos disponibles.'
+            : `La tiquetera no está ACTIVA (estado: ${data.estado}).`
+        );
         return;
       }
-      setLoading(true);
-      setQrError(null);
-      try {
-        const data = await api.getTiqueteraByQr(token);
-        if (data.estado !== 'ACTIVA') {
-          setQrError(
-            data.estado === 'FINALIZADA'
-              ? 'Esta tiquetera está FINALIZADA: no tiene almuerzos disponibles.'
-              : `La tiquetera no está ACTIVA (estado: ${data.estado}).`
-          );
-          return;
-        }
-        setTiquetera(data);
-        setPin('');
-        setPinError(null);
-        setStep('pin');
-        setScanning(false);
-      } catch (err) {
-        setQrError(err.message || 'No se pudo abrir la tiquetera');
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+      setTiquetera(data);
+      setPin('');
+      setPinError(null);
+      setStep('pin');
+      setScanning(false);
+    } catch (err) {
+      setQrError(err.message || 'No se pudo abrir la tiquetera');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // Llegada desde el listado de tiqueteras con el QR ya conocido
   useEffect(() => {
     if (initialQrToken) {
       queueMicrotask(() => abrirPorQr(initialQrToken));
@@ -100,17 +98,14 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
     }
   }, [initialQrToken, abrirPorQr, onClearInitialQr]);
 
-  const cargarPanel = useCallback(
-    async (qrToken, tiqueteraId, fecha = '') => {
-      const [rej, movs] = await Promise.all([
-        api.getRejilla(qrToken),
-        api.getHistorial(tiqueteraId, fecha),
-      ]);
-      setRejilla(rej);
-      setMovimientos(movs);
-    },
-    []
-  );
+  const cargarPanel = useCallback(async (qrToken, tiqueteraId, fecha = '') => {
+    const [rej, movs] = await Promise.all([
+      api.getRejilla(qrToken),
+      api.getHistorial(tiqueteraId, fecha),
+    ]);
+    setRejilla(rej);
+    setMovimientos(movs);
+  }, []);
 
   // HU-R6: validar el PIN antes de mostrar la tiquetera
   const handleValidarPin = async (e) => {
@@ -169,7 +164,7 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
       });
       onShowToast({
         type: 'success',
-        title: 'Consumo Registrado',
+        title: 'Almuerzo Registrado',
         message: `Se descontaron ${seleccionados.length} almuerzo(s) de la tiquetera.`,
       });
       setSeleccionados([]);
@@ -233,17 +228,19 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
   };
 
   const inputClass =
-    'w-full bg-[#151821] border border-[#262c38] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#e0533c] focus:ring-1 focus:ring-[#e0533c] transition-all';
+    'w-full bg-[#F9F5F1] border border-[#E5DED4] rounded-xl px-3.5 py-2.5 text-sm text-[#333333] placeholder-[#64829E]/65 focus:outline-none focus:border-[#FF6B47] focus:ring-1 focus:ring-[#FF6B47] transition-all';
   const primaryBtn =
-    'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#e0533c] hover:bg-[#c94530] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md shadow-[#e0533c]/20 transition-all cursor-pointer touch-press';
+    'inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#FF6B47] hover:bg-[#E85A37] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm shadow-md shadow-[#FF6B47]/25 transition-all cursor-pointer touch-press';
+  const confirmBtn =
+    'inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#64829E] hover:bg-[#526E88] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm shadow-md shadow-[#64829E]/25 transition-all cursor-pointer touch-press';
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight font-display">
+        <h1 className="text-xl sm:text-2xl font-semibold text-[#333333] tracking-tight font-display">
           Registro de Consumo
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
+        <p className="text-xs sm:text-sm text-[#64829E] mt-1">
           Abre la tiquetera con el QR, valida el PIN del cliente y descuenta almuerzos
         </p>
       </div>
@@ -252,12 +249,12 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
       {step === 'qr' && (
         <div className="bistro-card p-5 sm:p-6 max-w-xl space-y-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#e0533c]/15 text-[#e0533c] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#FF6B47]/15 text-[#FF6B47] flex items-center justify-center">
               <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white font-display">Abrir tiquetera</h2>
-              <p className="text-xs text-slate-400">Escanea el QR del cliente o pega su token</p>
+              <h2 className="text-base font-semibold text-[#333333] font-display">Abrir tiquetera</h2>
+              <p className="text-xs text-[#64829E]">Escanea el QR del cliente o pega su token</p>
             </div>
           </div>
 
@@ -278,25 +275,23 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
               autoFocus
             />
             {qrError && (
-              <p role="alert" className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">
+              <p role="alert" className="text-xs text-[#FF6B47] bg-[#FF6B47]/10 border border-[#FF6B47]/30 rounded-xl px-3 py-2 font-medium">
                 {qrError}
               </p>
             )}
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-2.5">
               <button type="submit" disabled={loading} className={`${primaryBtn} flex-1`}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
                 <span>Abrir tiquetera</span>
               </button>
-              {isQrScanSupported() && (
-                <button
-                  type="button"
-                  onClick={() => setScanning((s) => !s)}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#171b24] border border-[#272e3d] text-slate-200 hover:text-white hover:border-[#e5a93c]/50 text-sm font-semibold cursor-pointer transition-all"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span>{scanning ? 'Cerrar cámara' : 'Escanear con cámara'}</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setScanning((s) => !s)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#64829E] hover:bg-[#526E88] text-white text-sm font-semibold shadow-sm cursor-pointer transition-all touch-press"
+              >
+                <Camera className="w-4 h-4" />
+                <span>{scanning ? 'Cerrar cámara' : 'Escanear con cámara'}</span>
+              </button>
             </div>
           </form>
 
@@ -311,20 +306,20 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
         <div className="bistro-card p-5 sm:p-6 max-w-xl space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-[#e5a93c]/15 text-[#e5a93c] flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-[#64829E]/15 text-[#64829E] flex items-center justify-center shrink-0">
                 <KeyRound className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-white font-display truncate">
+                <h2 className="text-base font-semibold text-[#333333] font-display truncate">
                   {tiquetera.cliente_nombre || 'Cliente'}
                 </h2>
-                <p className="text-xs text-slate-400 font-mono truncate">{tiquetera.id}</p>
+                <p className="text-xs text-[#64829E] font-mono truncate">{tiquetera.id}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={cerrarTiquetera}
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-[#64829E] hover:text-[#333333] hover:bg-[#F9F5F1] cursor-pointer"
               aria-label="Cancelar"
             >
               <X className="w-4 h-4" />
@@ -332,7 +327,7 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
           </div>
 
           <form onSubmit={handleValidarPin} className="space-y-3">
-            <label htmlFor="pin-cliente" className="text-xs font-semibold text-slate-300 block">
+            <label htmlFor="pin-cliente" className="text-xs font-semibold text-[#333333] block">
               Pide al cliente su PIN de 6 dígitos
             </label>
             <input
@@ -348,11 +343,11 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
               autoFocus
             />
             {pinError && (
-              <p role="alert" className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">
+              <p role="alert" className="text-xs text-[#FF6B47] bg-[#FF6B47]/10 border border-[#FF6B47]/30 rounded-xl px-3 py-2 font-medium">
                 {pinError}
               </p>
             )}
-            <button type="submit" disabled={loading || pin.length !== 6} className={`${primaryBtn} w-full`}>
+            <button type="submit" disabled={loading || pin.length !== 6} className={`${primaryBtn} w-full py-3`}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
               <span>Validar PIN</span>
             </button>
@@ -365,36 +360,36 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
         <>
           <div className="bistro-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-[#252b3a] text-slate-200 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#64829E]/15 text-[#64829E] flex items-center justify-center shrink-0">
                 <User className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-white font-display truncate">
+                <h2 className="text-base font-semibold text-[#333333] font-display truncate">
                   {rejilla.cliente?.nombre || tiquetera.cliente_nombre}
                 </h2>
-                <p className="text-xs text-slate-400 font-mono truncate">{tiquetera.id}</p>
+                <p className="text-xs text-[#64829E] font-mono truncate">{tiquetera.id}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between sm:justify-end gap-4">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Total</span>
-                  <span className="font-mono font-bold text-white">{rejilla.saldo.total}</span>
+                  <span className="text-[10px] font-medium text-[#64829E] block">Total</span>
+                  <span className="font-mono font-bold text-[#333333]">{rejilla.saldo.total}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Consumidos</span>
-                  <span className="font-mono font-bold text-[#e0533c]">{rejilla.saldo.consumidos}</span>
+                  <span className="text-[10px] font-medium text-[#FF6B47] block">Consumidos</span>
+                  <span className="font-mono font-bold text-[#FF6B47]">{rejilla.saldo.consumidos}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 block">Disponibles</span>
-                  <span className="font-mono font-bold text-emerald-400">{rejilla.saldo.disponibles}</span>
+                  <span className="text-[10px] font-medium text-[#64829E] block">Disponibles</span>
+                  <span className="font-mono font-bold text-[#64829E]">{rejilla.saldo.disponibles}</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={cerrarTiquetera}
-                className="py-2 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white border border-[#272e3d] hover:border-[#3a4357] cursor-pointer transition-all"
+                className="py-2 px-3.5 rounded-xl text-xs font-semibold text-[#64829E] hover:text-[#333333] bg-[#F9F5F1] border border-[#E5DED4] cursor-pointer transition-all"
               >
                 Cerrar
               </button>
@@ -403,15 +398,15 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
 
           <section className="bistro-card p-4 sm:p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-bold text-white font-display flex items-center gap-2">
-                <LayoutGrid className="w-4 h-4 text-[#e5a93c]" />
+              <h3 className="text-sm font-semibold text-[#333333] font-display flex items-center gap-2">
+                <LayoutGrid className="w-4 h-4 text-[#FF6B47]" />
                 Rejilla de almuerzos
               </h3>
               <span
-                className={`text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider border ${
+                className={`text-[10px] px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider border ${
                   rejilla.estado === 'ACTIVA'
-                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                    ? 'bg-[#64829E]/15 text-[#64829E] border-[#64829E]/30'
+                    : 'bg-[#F9F5F1] text-[#64829E] border-[#E5DED4]'
                 }`}
               >
                 {rejilla.estado === 'ACTIVA' ? 'En uso' : 'Agotada'}
@@ -429,9 +424,10 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
               disabled={saving}
             />
 
-            <div className="pt-3 border-t border-[#232835] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                <Utensils className="w-3.5 h-3.5" />
+            {/* Botón de Confirmación en Azul Pizarra (#64829E) del Sistema de Diseño */}
+            <div className="pt-3 border-t border-[#E5DED4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <span className="text-xs text-[#64829E] font-medium flex items-center gap-1.5">
+                <Utensils className="w-3.5 h-3.5 text-[#FF6B47]" />
                 {seleccionados.length === 0
                   ? 'Selecciona los cuadros disponibles a descontar'
                   : `${seleccionados.length} seleccionado(s): ${seleccionados.join(', ')}`}
@@ -440,17 +436,21 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
                 type="button"
                 onClick={handleConfirmarConsumo}
                 disabled={seleccionados.length === 0 || saving}
-                className={primaryBtn}
+                className={confirmBtn}
               >
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
                 <span>Confirmar consumo ({seleccionados.length})</span>
               </button>
             </div>
           </section>
 
           <section className="bistro-card p-4 sm:p-5 space-y-4">
-            <h3 className="text-sm font-bold text-white font-display flex items-center gap-2">
-              <History className="w-4 h-4 text-[#e5a93c]" />
+            <h3 className="text-sm font-semibold text-[#333333] font-display flex items-center gap-2">
+              <History className="w-4 h-4 text-[#FF6B47]" />
               Historial de movimientos
             </h3>
             <HistorialMovimientos
@@ -470,13 +470,13 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
       >
         {cuadroRevertir && (
           <div className="space-y-4">
-            <p className="text-sm text-slate-300">
-              El almuerzo <span className="font-mono font-bold text-[#e5a93c]">#{cuadroRevertir.numero}</span>{' '}
+            <p className="text-sm text-[#333333]/85">
+              El almuerzo <span className="font-mono font-bold text-[#FF6B47]">#{cuadroRevertir.numero}</span>{' '}
               se registró hoy. Al deseleccionarlo vuelve a estar disponible y queda una reversa visible en el
               historial.
             </p>
             <div>
-              <label htmlFor="motivo-reversa" className="text-xs font-semibold text-slate-300 block mb-1.5">
+              <label htmlFor="motivo-reversa" className="text-xs font-semibold text-[#333333] block mb-1.5">
                 Motivo (opcional)
               </label>
               <input
@@ -488,12 +488,12 @@ export default function ConsumoView({ initialQrToken, onClearInitialQr, onShowTo
                 className={inputClass}
               />
             </div>
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 justify-end pt-2 border-t border-[#E5DED4]">
               <button
                 type="button"
                 onClick={() => setCuadroRevertir(null)}
                 disabled={reverting}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 border border-[#272e3d] hover:text-white cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#64829E] hover:text-[#333333] hover:bg-[#F9F5F1] cursor-pointer"
               >
                 Cancelar
               </button>

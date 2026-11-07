@@ -38,6 +38,8 @@ export function initSchema() {
       passwordHash TEXT,
       password TEXT,
       role TEXT NOT NULL DEFAULT 'RESTAURANTE',
+      restaurante_id TEXT,
+      es_titular INTEGER NOT NULL DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1,
       createdAt TEXT NOT NULL
     );
@@ -88,6 +90,18 @@ export function initSchema() {
     );
   `);
 
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN restaurante_id TEXT;`);
+  } catch {
+    // Columna ya existe
+  }
+
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN es_titular INTEGER NOT NULL DEFAULT 0;`);
+  } catch {
+    // Columna ya existe
+  }
+
   seedDefaultUsers();
 }
 
@@ -97,9 +111,21 @@ export function seedDefaultUsers() {
 
   if (result.count === 0) {
     const insertStmt = db.prepare(`
-      INSERT INTO users (id, name, email, password, role, active, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, name, email, password, role, restaurante_id, es_titular, active, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
+
+    insertStmt.run(
+      'USR-SUPER-ADMIN',
+      'Superusuario',
+      'admin@tiquetera.com',
+      'admin123',
+      'SUPER_ADMIN',
+      null,
+      0,
+      1,
+      new Date().toISOString()
+    );
 
     insertStmt.run(
       'USR-DEMO-1',
@@ -107,6 +133,8 @@ export function seedDefaultUsers() {
       'prueba@gmail.com',
       '1234',
       'RESTAURANTE',
+      'REST-1',
+      1,
       1,
       new Date().toISOString()
     );
@@ -117,9 +145,40 @@ export function seedDefaultUsers() {
       'cocina@tiquetera.com',
       'cocina123',
       'RESTAURANTE',
+      'REST-1',
+      0,
       1,
       new Date().toISOString()
     );
+  } else {
+    // Asegurar que exista el superusuario en bases de datos ya creadas
+    const superAdmin = db
+      .prepare('SELECT id FROM users WHERE LOWER(email) = ?')
+      .get('admin@tiquetera.com');
+    if (!superAdmin) {
+      db.prepare(`
+        INSERT INTO users (id, name, email, password, role, restaurante_id, es_titular, active, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        'USR-SUPER-ADMIN',
+        'Superusuario',
+        'admin@tiquetera.com',
+        'admin123',
+        'SUPER_ADMIN',
+        null,
+        0,
+        1,
+        new Date().toISOString()
+      );
+    }
+
+    // Asegurar restaurante_id en cuentas demo preexistentes
+    db.prepare(
+      `UPDATE users SET restaurante_id = 'REST-1', es_titular = 1 WHERE email = 'prueba@gmail.com' AND (restaurante_id IS NULL OR es_titular = 0)`
+    ).run();
+    db.prepare(
+      `UPDATE users SET restaurante_id = 'REST-1' WHERE role = 'RESTAURANTE' AND restaurante_id IS NULL`
+    ).run();
   }
 }
 

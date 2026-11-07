@@ -86,6 +86,41 @@ describe("Verificación Completa de Historias de Usuario (HU-R1 a HU-R12 y HU-C1
 
       assert.equal(res.status, 200);
     });
+
+    it("Superusuario: debe autenticar SUPER_ADMIN y permitir crear perfiles de restaurantes independientes", async () => {
+      const resLoginAdmin = await fetch(`${baseUrl}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "admin@tiquetera.com",
+          password: "admin123",
+        }),
+      });
+      assert.equal(resLoginAdmin.status, 200);
+      const dataAdmin = await resLoginAdmin.json();
+      assert.equal(dataAdmin.usuario.role, "SUPER_ADMIN");
+
+      const resCrearRest = await fetch(`${baseUrl}/api/users/restaurantes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Restaurante El Buen Sabor",
+          email: "contacto@buensabor.com",
+          password: "sabor123",
+        }),
+      });
+      assert.equal(resCrearRest.status, 201);
+      const nuevoRest = await resCrearRest.json();
+      assert.equal(nuevoRest.name, "Restaurante El Buen Sabor");
+      assert.equal(nuevoRest.role, "RESTAURANTE");
+      assert.equal(nuevoRest.es_titular, true);
+      assert.ok(nuevoRest.restaurante_id.startsWith("REST-"));
+
+      const resListRest = await fetch(`${baseUrl}/api/users/restaurantes`);
+      assert.equal(resListRest.status, 200);
+      const listaRest = await resListRest.json();
+      assert.ok(listaRest.some((r) => r.email === "contacto@buensabor.com"));
+    });
   });
 
   describe("HU-R2: Registro de clientes", () => {
@@ -158,6 +193,28 @@ describe("Verificación Completa de Historias de Usuario (HU-R1 a HU-R12 y HU-C1
       assert.equal(data.estado, "PENDIENTE");
       assert.equal(data.codigo_activacion, codigoGenerado);
       assert.ok(data.fecha_expiracion_codigo);
+    });
+
+    it("debe permitir eliminar una tiquetera en estado PENDIENTE", async () => {
+      const resCrear = await fetch(`${baseUrl}/api/tiqueteras`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cliente_id: "CLI-HU-TEST-1",
+          total_almuerzos: 5,
+          restaurante_id: "REST-HU-TEST",
+        }),
+      });
+      const dataCrear = await resCrear.json();
+      const idEliminar = dataCrear.tiquetera.id;
+
+      const resDel = await fetch(`${baseUrl}/api/tiqueteras/${idEliminar}`, {
+        method: "DELETE",
+      });
+      assert.equal(resDel.status, 200);
+
+      const resCheck = await fetch(`${baseUrl}/api/tiqueteras/${idEliminar}`);
+      assert.equal(resCheck.status, 404);
     });
   });
 
@@ -274,6 +331,13 @@ describe("Verificación Completa de Historias de Usuario (HU-R1 a HU-R12 y HU-C1
       assert.equal(data.saldo.disponibles, 8);
       assert.equal(data.saldo.consumidos, 0);
       assert.ok(Array.isArray(data.movimientos));
+    });
+
+    it("debe rechazar eliminar una tiquetera que ya está en estado ACTIVA", async () => {
+      const resDel = await fetch(`${baseUrl}/api/tiqueteras/${tiqueteraId}`, {
+        method: "DELETE",
+      });
+      assert.equal(resDel.status, 400);
     });
   });
 
@@ -429,6 +493,29 @@ describe("Verificación Completa de Historias de Usuario (HU-R1 a HU-R12 y HU-C1
       assert.equal(resFecha.status, 200);
       const historialFiltrado = await resFecha.json();
       assert.equal(historialFiltrado.length, 2);
+    });
+
+    it("debe permitir eliminar una tiquetera cuando ya está en estado FINALIZADA", async () => {
+      // Consumir los 4 almuerzos restantes (cuadros 1, 3, 4, 5) para que pase a FINALIZADA
+      const resConsumoTotal = await fetch(`${baseUrl}/api/consumos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tiquetera_id: tiqueteraId,
+          pin,
+          usuario_id: "USR-TEST-CAJERO",
+          cantidad: 4,
+          cuadros_seleccionados: [1, 3, 4, 5],
+        }),
+      });
+      assert.equal(resConsumoTotal.status, 201);
+      const dataFinal = await resConsumoTotal.json();
+      assert.equal(dataFinal.tiquetera.estado, "FINALIZADA");
+
+      const resDel = await fetch(`${baseUrl}/api/tiqueteras/${tiqueteraId}`, {
+        method: "DELETE",
+      });
+      assert.equal(resDel.status, 200);
     });
   });
 });
