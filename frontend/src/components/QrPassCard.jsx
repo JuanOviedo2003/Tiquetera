@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { QrCode, Download, Copy, Check, ExternalLink, Share2 } from 'lucide-react';
-import { buildClienteUrl, renderQrToCanvas } from '../utils/qr';
+import { buildClienteUrl, copyToClipboard, renderQrToCanvas } from '../utils/qr';
 
 /**
  * HU-C4: Tarjeta de Código QR fiel al Sistema de Diseño Integral.
@@ -52,7 +52,7 @@ export default function QrPassCard({
 
   const handleCopyUrl = async () => {
     try {
-      await navigator.clipboard.writeText(urlConsulta);
+      await copyToClipboard(urlConsulta);
       setCopiedUrl(true);
       onShowToast?.({
         type: 'success',
@@ -71,7 +71,7 @@ export default function QrPassCard({
 
   const handleCopyToken = async () => {
     try {
-      await navigator.clipboard.writeText(qrToken);
+      await copyToClipboard(qrToken);
       setCopiedToken(true);
       onShowToast?.({
         type: 'success',
