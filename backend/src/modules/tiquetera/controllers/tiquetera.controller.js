@@ -154,14 +154,15 @@ export default class TiqueteraController {
   };
 
   /**
-   * HU-C3: Regeneración de PIN por parte del cliente
+   * HU-C3: Regeneración de PIN por parte del cliente (requiere PIN anterior)
    * POST /api/tiqueteras/regenerar-pin
    */
   regenerarPin = (req, res) => {
     try {
-      const { qr_token, nuevo_pin } = req.body ?? {};
+      const { qr_token, pin_anterior, nuevo_pin } = req.body ?? {};
       const resultado = this.tiqueteraService.regenerarPin({
         qr_token,
+        pin_anterior,
         nuevo_pin,
       });
       return res.json(resultado);
@@ -187,13 +188,64 @@ export default class TiqueteraController {
   };
 
   /**
-   * Eliminar tiquetera en estado PENDIENTE
+   * Eliminar tiquetera en estado PENDIENTE o FINALIZADA (o cualquiera si admin=true)
    * DELETE /api/tiqueteras/:id
    */
   eliminar = (req, res) => {
     try {
       const { id } = req.params;
-      const resultado = this.tiqueteraService.deleteTiquetera(id);
+      const forceAdmin = req.query.admin === "true" || req.query.force === "true";
+      const resultado = this.tiqueteraService.deleteTiquetera(id, { forceAdmin });
+      return res.json(resultado);
+    } catch (error) {
+      const statusCode = error.status || 400;
+      return res.status(statusCode).json({ error: error.message });
+    }
+  };
+
+  /**
+   * SUPER_ADMIN: Consultar PINes y trazabilidad de cambios de PIN
+   * GET /api/tiqueteras/admin/pines
+   */
+  adminObtenerPines = (req, res) => {
+    try {
+      const { restaurante_id, tiquetera_id } = req.query;
+      const resultado = this.tiqueteraService.adminGetPinesYHistorial({
+        restaurante_id,
+        tiquetera_id,
+      });
+      return res.json(resultado);
+    } catch (error) {
+      const statusCode = error.status || 400;
+      return res.status(statusCode).json({ error: error.message });
+    }
+  };
+
+  /**
+   * SUPER_ADMIN: Cambiar PIN de una tiquetera sin requerir el PIN anterior
+   * PUT /api/tiqueteras/:id/admin-pin
+   */
+  adminCambiarPin = (req, res) => {
+    try {
+      const { id } = req.params;
+      const { nuevo_pin } = req.body ?? {};
+      const resultado = this.tiqueteraService.adminCambiarPin(id, { nuevo_pin });
+      return res.json(resultado);
+    } catch (error) {
+      const statusCode = error.status || 400;
+      return res.status(statusCode).json({ error: error.message });
+    }
+  };
+
+  /**
+   * SUPER_ADMIN: Cambiar estado de una tiquetera independientemente de su estado actual
+   * PUT /api/tiqueteras/:id/estado
+   */
+  adminCambiarEstado = (req, res) => {
+    try {
+      const { id } = req.params;
+      const { estado } = req.body ?? {};
+      const resultado = this.tiqueteraService.adminCambiarEstado(id, { estado });
       return res.json(resultado);
     } catch (error) {
       const statusCode = error.status || 400;

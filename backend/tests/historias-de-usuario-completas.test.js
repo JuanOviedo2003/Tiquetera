@@ -284,13 +284,28 @@ describe("Verificación Completa de Historias de Usuario (HU-R1 a HU-R12 y HU-C1
       qrTokenGenerado = data.qr_token;
     });
 
-    it("HU-C3: debe permitir al cliente regenerar su PIN usando su QR token", async () => {
+    it("HU-C3: debe exigir el PIN anterior correcto para regenerar el PIN usando el QR token", async () => {
       const nuevoPin = "654321";
+
+      // Intentar regenerar con un PIN anterior incorrecto debe ser rechazado (401)
+      const resPinErroneo = await fetch(`${baseUrl}/api/tiqueteras/regenerar-pin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          qr_token: qrTokenGenerado,
+          pin_anterior: "000000",
+          nuevo_pin: nuevoPin,
+        }),
+      });
+      assert.equal(resPinErroneo.status, 401);
+
+      // Regenerar proporcionando el PIN anterior correcto
       const res = await fetch(`${baseUrl}/api/tiqueteras/regenerar-pin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           qr_token: qrTokenGenerado,
+          pin_anterior: pinInicial,
           nuevo_pin: nuevoPin,
         }),
       });
@@ -319,6 +334,15 @@ describe("Verificación Completa de Historias de Usuario (HU-R1 a HU-R12 y HU-C1
         }),
       });
       assert.equal(resNuevo.status, 200);
+
+      // Verificar que el historial de trazabilidad de PINes registró la activación y el cambio
+      const resAdminPines = await fetch(
+        `${baseUrl}/api/tiqueteras/admin/pines?tiquetera_id=${tiqueteraId}`
+      );
+      assert.equal(resAdminPines.status, 200);
+      const dataAdminPines = await resAdminPines.json();
+      assert.equal(dataAdminPines.tiqueteras[0].pin_actual, nuevoPin);
+      assert.ok(dataAdminPines.historial.length >= 2);
     });
 
     it("HU-C5: consulta pública de saldo e historial sin necesidad de cuenta", async () => {
@@ -516,6 +540,95 @@ describe("Verificación Completa de Historias de Usuario (HU-R1 a HU-R12 y HU-C1
         method: "DELETE",
       });
       assert.equal(resDel.status, 200);
+    });
+
+    it("SUPER_ADMIN: debe permitir editar restaurante (correo, clave, precio, activo), cambiar estado/PIN de tiqueteras y eliminarlas en cualquier estado", async () => {
+      // Crear restaurante con precio_tiquetera
+      const resCreateRest = await fetch(`${baseUrl}/api/users/restaurantes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Restaurante El Roble",
+          email: "roble@test.com",
+          password: "passInicial",
+          precio_tiquetera: 120000,
+        }),
+      });
+      assert.equal(resCreateRest.status, 201);
+      const restCreado = await resCreateRest.json();
+      assert.equal(restCreado.precio_tiquetera, 120000);
+
+      // Editar correo, precio y desactivar restaurante
+      const resUpdateRest = await fetch(`${baseUrl}/api/users/restaurantes/${restCreado.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "roble_nuevo@test.com",
+          password: "nuevaPassword123",
+          precio_tiquetera: 145000,
+          active: false,
+        }),
+      });
+      assert.equal(resUpdateRest.status, 200);
+      const restActualizado = await resUpdateRest.json();
+      assert.equal(restActualizado.email, "roble_nuevo@test.com");
+      assert.equal(restActualizado.precio_tiquetera, 145000);
+      assert.equal(restActualizado.active, false);
+
+      // Crear cliente y tiquetera en ese restaurante
+      const resCli = await fetch(`${baseUrl}/api/clientes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: "Cliente Admin Test",
+          identificacion: "99887766",
+          restaurante_id: restCreado.restaurante_id,
+        }),
+      });
+      const cli = (await resCli.json()).cliente;
+
+      const resTiq = await fetch(`${baseUrl}/api/tiqueteras`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cliente_id: cli.id,
+          total_almuerzos: 10,
+          restaurante_id: restCreado.restaurante_id,
+        }),
+      });
+      const tiq = (await resTiq.json()).tiquetera;
+
+      // Cambiar estado de PENDIENTE a ACTIVA desde admin
+      const resEstado = await fetch(`${baseUrl}/api/tiqueteras/${tiq.id}/estado`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: "ACTIVA" }),
+      });
+      assert.equal(resEstado.status, 200);
+      const dataEstado = await resEstado.json();
+      assert.equal(dataEstado.tiquetera.estado, "ACTIVA");
+
+      // Cambiar PIN desde admin
+      const resPinAdmin = await fetch(`${baseUrl}/api/tiqueteras/${tiq.id}/admin-pin`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nuevo_pin: "909090" }),
+      });
+      assert.equal(resPinAdmin.status, 200);
+      const dataPinAdmin = await resPinAdmin.json();
+      assert.equal(dataPinAdmin.tiquetera.pin_actual, "909090");
+
+      // Eliminar tiquetera en estado ACTIVA usando el permiso de admin (?admin=true)
+      const resDelAdmin = await fetch(`${baseUrl}/api/tiqueteras/${tiq.id}?admin=true`, {
+        method: "DELETE",
+      });
+      assert.equal(resDelAdmin.status, 200);
+
+      // Eliminar restaurante
+      const resDelRest = await fetch(`${baseUrl}/api/users/restaurantes/${restCreado.id}`, {
+        method: "DELETE",
+      });
+      assert.equal(resDelRest.status, 200);
     });
   });
 });

@@ -204,11 +204,61 @@ export const api = {
     return handleResponse(res);
   },
 
-  async createRestaurante({ name, email, password }) {
+  async createRestaurante({ name, email, password, precio_tiquetera = 0 }) {
     const res = await fetch(`${API_BASE_URL}/users/restaurantes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, precio_tiquetera }),
+    });
+    return handleResponse(res);
+  },
+
+  async updateRestaurante(id, payload) {
+    const res = await fetch(`${API_BASE_URL}/users/restaurantes/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res);
+  },
+
+  async deleteRestaurante(id) {
+    const res = await fetch(`${API_BASE_URL}/users/restaurantes/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+    return handleResponse(res);
+  },
+
+  async adminGetPines(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.restaurante_id) params.append('restaurante_id', filters.restaurante_id);
+    if (filters.tiquetera_id) params.append('tiquetera_id', filters.tiquetera_id);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/admin/pines${query}`);
+    return handleResponse(res);
+  },
+
+  async adminCambiarPinTiquetera(id, nuevo_pin) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/${encodeURIComponent(id)}/admin-pin`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nuevo_pin }),
+    });
+    return handleResponse(res);
+  },
+
+  async adminCambiarEstadoTiquetera(id, estado) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/${encodeURIComponent(id)}/estado`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado }),
+    });
+    return handleResponse(res);
+  },
+
+  async adminDeleteTiquetera(id) {
+    const res = await fetch(`${API_BASE_URL}/tiqueteras/${encodeURIComponent(id)}?admin=true`, {
+      method: 'DELETE',
     });
     return handleResponse(res);
   },
@@ -226,13 +276,13 @@ export const api = {
   },
 
   // ==========================================
-  // HU-C3: Regeneración de PIN del Cliente
+  // HU-C3: Regeneración de PIN del Cliente (requiere PIN anterior)
   // ==========================================
-  async regenerarPin({ qr_token, nuevo_pin }) {
+  async regenerarPin({ qr_token, pin_anterior, nuevo_pin }) {
     const res = await fetch(`${API_BASE_URL}/tiqueteras/regenerar-pin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ qr_token, nuevo_pin }),
+      body: JSON.stringify({ qr_token, pin_anterior, nuevo_pin }),
     });
     return handleResponse(res);
   },
