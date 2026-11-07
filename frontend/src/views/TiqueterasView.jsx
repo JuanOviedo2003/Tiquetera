@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
-import { buildActivacionUrl } from '../utils/qr';
+import { buildActivacionUrl, copyToClipboard } from '../utils/qr';
 import {
   Ticket,
   Copy,
@@ -163,7 +163,7 @@ export default function TiqueterasView({
 
   const handleCopyCode = async (code) => {
     try {
-      await navigator.clipboard.writeText(code);
+      await copyToClipboard(code);
       setCopied(true);
       onShowToast({
         type: 'success',
@@ -183,7 +183,7 @@ export default function TiqueterasView({
   const handleCopyActivationLink = async (code) => {
     const url = buildActivacionUrl(code);
     try {
-      await navigator.clipboard.writeText(url);
+      await copyToClipboard(url);
       setCopiedLink(true);
       onShowToast({
         type: 'success',
@@ -714,18 +714,26 @@ export default function TiqueterasView({
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => handleCopyActivationLink(codeModalData.codigo)}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold border transition-all cursor-pointer touch-press ${
-                copiedLink
-                  ? 'bg-[#64829E] text-white border-[#64829E]'
-                  : 'bg-[#F9F5F1] hover:bg-[#64829E]/10 text-[#333333] border-[#E5DED4]'
-              }`}
-            >
-              {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5 text-[#64829E]" />}
-              <span>{copiedLink ? '¡Enlace Copiado!' : 'Copiar Enlace de Activación para el Cliente'}</span>
-            </button>
+            <div className="space-y-2">
+              <div className="px-3.5 py-2 rounded-xl bg-[#F9F5F1] border border-[#E5DED4] flex items-center justify-between gap-2">
+                <span className="text-[11px] font-mono text-[#64829E] truncate select-all">
+                  {buildActivacionUrl(codeModalData.codigo)}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleCopyActivationLink(codeModalData.codigo)}
+                className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold border transition-all cursor-pointer touch-press ${
+                  copiedLink
+                    ? 'bg-[#64829E] text-white border-[#64829E]'
+                    : 'bg-[#F9F5F1] hover:bg-[#64829E]/10 text-[#333333] border-[#E5DED4]'
+                }`}
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5 text-[#64829E]" />}
+                <span>{copiedLink ? '¡Enlace Copiado!' : 'Copiar Enlace de Activación para el Cliente'}</span>
+              </button>
+            </div>
 
             <div className="pt-3.5 border-t border-[#E5DED4] flex items-center justify-between text-xs">
               <span className="text-[#64829E] text-[11px]">
