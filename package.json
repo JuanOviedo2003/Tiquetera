@@ -18,6 +18,7 @@
     "prisma:push": "npm run prisma:push -w backend"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "concurrently": "^10.0.6"
   },
   "overrides": {
