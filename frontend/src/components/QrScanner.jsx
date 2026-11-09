@@ -53,50 +53,34 @@ export default function QrScanner({ onDetected, onClose }) {
     scratchCanvasRef.current = document.createElement('canvas');
 
     async function start() {
-      // Intentar obtener getUserMedia moderno o fallback de versiones previas
-      const getMedia =
-        navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices) ||
-        navigator.getUserMedia?.bind(navigator) ||
-        navigator.webkitGetUserMedia?.bind(navigator) ||
-        navigator.mozGetUserMedia?.bind(navigator) ||
-        navigator.msGetUserMedia?.bind(navigator);
-
-      if (!getMedia) {
-        // En conexiones HTTP sobre IP pública, navegadores móviles/desktop deshabilitan getUserMedia por seguridad.
-        // Abrimos automáticamente el selector de cámara nativo del dispositivo (capture="environment")
-        setError('native_camera');
-        if (fileInputRef.current) {
-          fileInputRef.current.click();
-        }
-        return;
-      }
-
       try {
-        let mediaStream;
-        const videoConstraints = {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        };
+        const getMedia =
+          navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices) ||
+          navigator.getUserMedia?.bind(navigator) ||
+          navigator.webkitGetUserMedia?.bind(navigator) ||
+          navigator.mozGetUserMedia?.bind(navigator) ||
+          navigator.msGetUserMedia?.bind(navigator);
 
-        if (navigator.mediaDevices?.getUserMedia) {
+        let mediaStream = null;
+
+        if (getMedia) {
           try {
-            mediaStream = await navigator.mediaDevices.getUserMedia({
-              video: videoConstraints,
+            mediaStream = await getMedia({
+              video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+              },
               audio: false,
             });
           } catch {
-            // Intentar con restricción simple en caso de que facingMode o resoluciones específicas fallen
-            mediaStream = await navigator.mediaDevices.getUserMedia({
-              video: true,
-              audio: false,
-            });
+            // Reintento con configuración básica de video
+            mediaStream = await getMedia({ video: true, audio: false });
           }
-        } else {
-          // Fallback clásico con Promesa
-          mediaStream = await new Promise((resolve, reject) => {
-            getMedia({ video: true, audio: false }, resolve, reject);
-          });
+        }
+
+        if (!mediaStream) {
+          throw new Error('No se pudo inicializar la cámara web.');
         }
 
         if (cancelled) {
@@ -135,7 +119,7 @@ export default function QrScanner({ onDetected, onClose }) {
               return;
             }
           } catch {
-            // Reintentar en el siguiente ciclo
+            // Reintentar en el siguiente frame
           }
 
           if (nativeDetector) {
@@ -146,15 +130,14 @@ export default function QrScanner({ onDetected, onClose }) {
                 onDetected(codes[0].rawValue);
               }
             } catch {
-              // Reintentar en el siguiente ciclo
+              // Reintentar en el siguiente frame
             }
           }
         }, 150);
-      } catch (err) {
+      } catch {
         if (!cancelled) {
-          // Si el navegador bloqueó la cámara por contexto o permiso denegado
           setError(
-            'No se pudo acceder a la cámara. Puedes subir la imagen del QR o ingresar el identificador manualmente.'
+            'No se pudo abrir el visor de video. Puedes usar la cámara para capturar la foto o subir la imagen del QR.'
           );
         }
       }
