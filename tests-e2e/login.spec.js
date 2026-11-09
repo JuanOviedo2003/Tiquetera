@@ -743,3 +743,274 @@ test('permite iniciar la emisión de una tiquetera desde un cliente', async ({ p
   // 8. Comprobar que no hubo errores JavaScript
   await expect.poll(() => erroresPagina).toHaveLength(0);
 });
+
+
+test('HU-R4: muestra el listado y los controles de filtrado de tiqueteras', async ({ page }) => {
+  await page.goto('/');
+
+  // Iniciar sesión
+  await page.getByPlaceholder('ejemplo@restaurante.com').fill('prueba@gmail.com');
+  await page.getByPlaceholder('••••••••').fill('1234');
+
+  await page.getByRole('button', {
+    name: /Ingresar a Terminal/i
+  }).click();
+
+  // Entrar a Tiqueteras
+  await page.getByRole('button', {
+    name: 'Tiqueteras'
+  }).click();
+
+  // Comprobar encabezado
+  await expect(
+    page.getByRole('heading', { name: 'Control de Tiqueteras' })
+  ).toBeVisible();
+
+  // Comprobar buscador
+  await expect(
+    page.getByPlaceholder('Buscar por comensal o cliente...')
+  ).toBeVisible();
+
+  // Comprobar filtro de estados
+  const filtroEstado = page.locator('select');
+
+  await expect(filtroEstado).toBeVisible();
+
+  await expect(filtroEstado.locator('option')).toHaveCount(4);
+
+  await expect(filtroEstado.locator('option').nth(0))
+    .toHaveText('Todos los estados');
+
+  await expect(filtroEstado.locator('option').nth(1))
+    .toContainText('PENDIENTE');
+
+  await expect(filtroEstado.locator('option').nth(2))
+    .toContainText('ACTIVA');
+
+  await expect(filtroEstado.locator('option').nth(3))
+    .toContainText('FINALIZADA');
+});
+
+
+test('HU-R4: permite filtrar tiqueteras por estado', async ({ page }) => {
+  await page.goto('/');
+
+  // Iniciar sesión
+  await page.getByPlaceholder('ejemplo@restaurante.com').fill('prueba@gmail.com');
+  await page.getByPlaceholder('••••••••').fill('1234');
+  await page.getByRole('button', { name: /Ingresar a Terminal/i }).click();
+
+  // Entrar a Tiqueteras
+  await page.getByRole('button', { name: 'Tiqueteras' }).click();
+
+  await expect(
+    page.getByRole('heading', { name: 'Control de Tiqueteras' })
+  ).toBeVisible();
+
+  // Localizar el filtro
+  const filtroEstado = page.locator('select');
+  await expect(filtroEstado).toBeVisible();
+
+  // Seleccionar PENDIENTE
+  await filtroEstado.selectOption('PENDIENTE');
+  await expect(filtroEstado).toHaveValue('PENDIENTE');
+
+  // Seleccionar ACTIVA
+  await filtroEstado.selectOption('ACTIVA');
+  await expect(filtroEstado).toHaveValue('ACTIVA');
+
+  // Seleccionar FINALIZADA
+  await filtroEstado.selectOption('FINALIZADA');
+  await expect(filtroEstado).toHaveValue('FINALIZADA');
+
+  // Volver a mostrar todos los estados
+  await filtroEstado.selectOption('');
+  await expect(filtroEstado).toHaveValue('');
+});
+
+
+test('HU-R4: permite buscar tiqueteras por nombre de cliente', async ({ page }) => {
+  await page.goto('/');
+
+  // Iniciar sesión
+  await page.getByPlaceholder('ejemplo@restaurante.com').fill('prueba@gmail.com');
+  await page.getByPlaceholder('••••••••').fill('1234');
+  await page.getByRole('button', { name: /Ingresar a Terminal/i }).click();
+
+  // Entrar a Tiqueteras
+  await page.getByRole('button', { name: 'Tiqueteras' }).click();
+
+  const buscador = page.getByPlaceholder('Buscar por comensal o cliente...');
+
+  await expect(buscador).toBeVisible();
+
+  // Escribir un nombre que probablemente no exista
+  await buscador.fill('ClienteInexistenteE2E');
+
+  await expect(
+    page.getByText('No hay tiqueteras registradas')
+  ).toBeVisible();
+
+  await expect(
+    page.getByText('No hay registros que coincidan con los filtros aplicados.')
+  ).toBeVisible();
+
+  // Limpiar búsqueda
+  await buscador.fill('');
+
+  await expect(buscador).toHaveValue('');
+});
+
+
+test('HU-R5: muestra el formulario para abrir una tiquetera por QR', async ({ page }) => {
+  await page.goto('/');
+
+  // Iniciar sesión
+  await page.getByPlaceholder('ejemplo@restaurante.com').fill('prueba@gmail.com');
+  await page.getByPlaceholder('••••••••').fill('1234');
+  await page.getByRole('button', { name: /Ingresar a Terminal/i }).click();
+
+  // Entrar al módulo de consumo
+  await page.getByRole('button', { name: 'Consumo' }).click();
+
+  // Comprobar la pantalla de apertura
+  await expect(
+    page.getByRole('heading', { name: 'Registro de Consumo' })
+  ).toBeVisible();
+
+  await expect(
+    page.getByRole('heading', { name: 'Abrir tiquetera' })
+  ).toBeVisible();
+
+  await expect(
+    page.getByLabel('Token del QR')
+  ).toBeVisible();
+
+  await expect(
+    page.getByRole('button', { name: 'Abrir tiquetera' })
+  ).toBeVisible();
+
+  await expect(
+    page.getByRole('button', { name: 'Escanear con cámara' })
+  ).toBeVisible();
+});
+
+
+test('HU-R5: abre una tiquetera activa con su token QR', async ({ page }) => {
+  const tokenQR = 'ae264d4a-d90b-438c-aa79-8366c0fdc046';
+
+  await page.goto('/');
+
+  await page.getByPlaceholder('ejemplo@restaurante.com').fill('prueba@gmail.com');
+  await page.getByPlaceholder('••••••••').fill('1234');
+
+  await page.getByRole('button', {
+    name: /Ingresar a Terminal/i
+  }).click();
+
+  await page.getByRole('button', {
+    name: 'Consumo'
+  }).click();
+
+  await page.getByLabel('Token del QR').fill(tokenQR);
+
+  await page.getByRole('button', {
+    name: 'Abrir tiquetera'
+  }).click();
+
+  // Esperar la respuesta de la API
+  await page.waitForTimeout(1500);
+
+  // Mostrar información de diagnóstico
+  console.log('URL actual:', page.url());
+
+  console.log(
+    'Texto visible:',
+    (await page.locator('body').innerText()).slice(0, 1500)
+  );
+
+  console.log(
+    'Campos visibles:',
+    await page.locator('input:visible').evaluateAll(
+      inputs => inputs.map(input => ({
+        placeholder: input.placeholder,
+        ariaLabel: input.getAttribute('aria-label'),
+        type: input.type
+      }))
+    )
+  );
+
+  // Comprobar que apareció la pantalla del PIN
+  await expect(
+    page.locator('#pin-cliente')
+  ).toBeVisible();
+});
+
+test('HU-R6: rechaza un PIN incorrecto', async ({ page }) => {
+  const tokenQR = 'ae264d4a-d90b-438c-aa79-8366c0fdc046';
+  const pinIncorrecto = '000000'; // Asegúrate de que no sea el PIN real.
+
+  await page.goto('/');
+
+  await page.getByPlaceholder('ejemplo@restaurante.com').fill('prueba@gmail.com');
+  await page.getByPlaceholder('••••••••').fill('1234');
+  await page.getByRole('button', { name: /Ingresar a Terminal/i }).click();
+
+  await page.getByRole('button', { name: 'Consumo' }).click();
+  await page.getByLabel('Token del QR').fill(tokenQR);
+  await page.getByRole('button', { name: 'Abrir tiquetera' }).click();
+
+  await expect(page.locator('#pin-cliente')).toBeVisible();
+
+  await page.locator('#pin-cliente').fill(pinIncorrecto);
+  await page.getByRole('button', { name: 'Validar PIN' }).click();
+
+  await expect(page.locator('#pin-cliente')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Rejilla de almuerzos' })).not.toBeVisible();
+});
+
+test('HU-R6: permite acceder con un PIN correcto', async ({ page }) => {
+  const tokenQR = 'ae264d4a-d90b-438c-aa79-8366c0fdc046';
+  const pinCorrecto = process.env.PIN_TIQUETERA;
+
+  expect(pinCorrecto, 'Configura PIN_TIQUETERA antes de ejecutar la prueba').toMatch(/^\d{6}$/);
+
+  await page.goto('/');
+
+  await page.getByPlaceholder('ejemplo@restaurante.com').fill('prueba@gmail.com');
+  await page.getByPlaceholder('••••••••').fill('1234');
+  await page.getByRole('button', { name: /Ingresar a Terminal/i }).click();
+
+  await page.getByRole('button', { name: 'Consumo' }).click();
+  await page.getByLabel('Token del QR').fill(tokenQR);
+  await page.getByRole('button', { name: 'Abrir tiquetera' }).click();
+
+  await expect(page.locator('#pin-cliente')).toBeVisible();
+
+  await page.locator('#pin-cliente').fill(pinCorrecto);
+  await page.getByRole('button', { name: 'Validar PIN' }).click();
+
+  await expect(page.locator('#pin-cliente')).not.toBeVisible();
+});
+
+test('HU-R6: deshabilita la validación si el PIN tiene menos de 6 dígitos', async ({ page }) => {
+  const tokenQR = 'ae264d4a-d90b-438c-aa79-8366c0fdc046';
+
+  await page.goto('/');
+
+  await page.getByPlaceholder('ejemplo@restaurante.com').fill('prueba@gmail.com');
+  await page.getByPlaceholder('••••••••').fill('1234');
+  await page.getByRole('button', { name: /Ingresar a Terminal/i }).click();
+
+  await page.getByRole('button', { name: 'Consumo', exact: true }).click();
+  await page.getByLabel('Token del QR').fill(tokenQR);
+  await page.getByRole('button', { name: 'Abrir tiquetera' }).click();
+
+  await expect(page.locator('#pin-cliente')).toBeVisible();
+
+  await page.locator('#pin-cliente').fill('12345');
+
+  await expect(
+    page.getByRole('button', { name: 'Validar PIN' })
+  ).toBeDisabled();
+});

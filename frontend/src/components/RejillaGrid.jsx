@@ -3,16 +3,15 @@ import { Check, Utensils, Undo2 } from 'lucide-react';
 const hoyUtc = () => new Date().toISOString().slice(0, 10);
 
 /**
- * HU-R7: rejilla con cuadros disponibles y consumidos diferenciados.
+ * HU-R7: rejilla con cuadros disponibles y consumidos diferenciados con la paleta del Sistema de Diseño.
  * HU-R8: los disponibles se seleccionan para descontar.
  * HU-R9: un cuadro consumido el mismo día se puede deseleccionar (reversa).
- * El día se compara en UTC porque es el criterio que aplica el backend.
  */
 export default function RejillaGrid({ rejilla, seleccionados, onToggle, onRevertir, disabled }) {
   const hoy = hoyUtc();
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3.5">
       <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
         {rejilla.map((cuadro) => {
           const consumido = cuadro.estado === 'consumido';
@@ -39,8 +38,8 @@ export default function RejillaGrid({ rejilla, seleccionados, onToggle, onRevert
                 }
                 className={`relative aspect-square rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all ${
                   esDeHoy
-                    ? 'bg-[#e0533c]/10 border-[#e0533c]/40 text-[#e0533c] hover:bg-[#e0533c]/20 cursor-pointer touch-press'
-                    : 'bg-[#0e1015] border-[#252b36] text-slate-600 cursor-not-allowed'
+                    ? 'bg-[#FF6B47]/15 border-[#FF6B47]/50 text-[#FF6B47] hover:bg-[#FF6B47]/25 cursor-pointer touch-press'
+                    : 'bg-[#F9F5F1] border-[#E5DED4] text-[#333333]/40 cursor-not-allowed'
                 }`}
               >
                 <span className="text-sm font-mono font-bold line-through">{cuadro.numero}</span>
@@ -59,36 +58,36 @@ export default function RejillaGrid({ rejilla, seleccionados, onToggle, onRevert
               title={`Almuerzo ${cuadro.numero} disponible`}
               className={`relative aspect-square rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer touch-press ${
                 elegido
-                  ? 'bg-[#e5a93c] border-[#e5a93c] text-[#0e1015] shadow-md shadow-[#e5a93c]/20'
-                  : 'bg-[#151821] border-emerald-500/30 text-emerald-300 hover:border-emerald-400'
+                  ? 'bg-[#FF6B47] border-[#FF6B47] text-white shadow-md shadow-[#FF6B47]/25'
+                  : 'bg-white border-[#64829E]/45 text-[#64829E] hover:bg-[#64829E]/10 hover:border-[#64829E]'
               }`}
             >
               <span className="text-sm font-mono font-bold">{cuadro.numero}</span>
               {elegido ? (
-                <Check className="w-3 h-3" />
+                <Check className="w-3.5 h-3.5" />
               ) : (
-                <Utensils className="w-3 h-3 opacity-60" />
+                <Utensils className="w-3 h-3 opacity-80" />
               )}
             </button>
           );
         })}
       </div>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-[#333333]/75 font-medium">
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded bg-emerald-500/30 border border-emerald-500/50" />
+          <span className="w-2.5 h-2.5 rounded bg-[#64829E]/20 border border-[#64829E]" />
           Disponible
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded bg-[#e5a93c]" />
+          <span className="w-2.5 h-2.5 rounded bg-[#FF6B47]" />
           Seleccionado
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded bg-[#e0533c]/30 border border-[#e0533c]/50" />
-          Consumido hoy (se puede corregir)
+          <span className="w-2.5 h-2.5 rounded bg-[#FF6B47]/25 border border-[#FF6B47]" />
+          Consumido hoy (corregible)
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded bg-[#0e1015] border border-[#252b36]" />
+          <span className="w-2.5 h-2.5 rounded bg-[#F9F5F1] border border-[#D6CEC2]" />
           Consumido antes
         </span>
       </div>

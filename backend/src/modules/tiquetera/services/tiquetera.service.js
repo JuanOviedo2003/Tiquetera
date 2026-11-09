@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import TiqueteraEntity from "../entity/tiquetera.entity.js";
 import ClienteEntity from "../../cliente/entity/cliente.entity.js";
 import ConsumoEntity from "../../consumo/entity/consumo.entity.js";
+import UserEntity from "../../user/entity/user.entity.js";
 
 export class TiqueteraService {
   /**
@@ -104,19 +105,34 @@ export class TiqueteraService {
     }
 
     // Hashear PIN irreversiblemente usando SHA-256
-    const pinHash = crypto.createHash("sha256").update(String(pin).trim()).digest("hex");
+    const cleanPin = String(pin).trim();
+    const pinHash = crypto.createHash("sha256").update(cleanPin).digest("hex");
     // Generar identificador qr_token único e inmutable
     const qrToken = crypto.randomUUID();
+    const fechaActivacion = ahora.toISOString();
 
-    return TiqueteraEntity.updateOne(tiquetera.id, {
+    const updated = TiqueteraEntity.updateOne(tiquetera.id, {
       estado: "ACTIVA",
       codigo_usado: true,
       qr_token: qrToken,
       pin_hash: pinHash,
+      pin_actual: cleanPin,
       intentos_fallidos_pin: 0,
       bloqueado_hasta: null,
-      fecha_activacion: ahora.toISOString(),
+      fecha_activacion: fechaActivacion,
     });
+
+    TiqueteraEntity.recordPinHistory({
+      tiquetera_id: tiquetera.id,
+      restaurante_id: tiquetera.restaurante_id,
+      cliente_id: tiquetera.cliente_id,
+      pin_anterior: null,
+      pin_nuevo: cleanPin,
+      origen: "ACTIVACION",
+      fecha_hora: fechaActivacion,
+    });
+
+    return updated;
   }
 
   getTiqueteraById(id) {
@@ -175,7 +191,7 @@ export class TiqueteraService {
     }
 
     const cliente = ClienteEntity.findById(tiquetera.cliente_id);
-    const { pin_hash: _pinHash, ...tiqueteraSinPin } = tiquetera;
+    const { pin_hash: _pinHash, pin_actual: _pinActual, ...tiqueteraSinPin } = tiquetera;
     return {
       ...tiqueteraSinPin,
       cliente_nombre: cliente ? cliente.nombre : null,
@@ -288,11 +304,19 @@ export class TiqueteraService {
 
   /**
    * HU-C3: Regeneración de PIN
-   * RF-06: Permite al cliente regenerar su PIN de 6 dígitos en cualquier momento usando su QR
+   * RF-06: Permite al cliente regenerar su PIN de 6 dígitos validando obligatoriamente su PIN anterior
    */
-  regenerarPin({ qr_token, nuevo_pin }) {
+  regenerarPin({ qr_token, pin_anterior, nuevo_pin }) {
     if (!qr_token || !String(qr_token).trim()) {
       const error = new Error("El qr_token es obligatorio");
+      error.status = 400;
+      throw error;
+    }
+
+    if (!pin_anterior || !/^\d{6}$/.test(String(pin_anterior).trim())) {
+      const error = new Error(
+        "Debes ingresar el PIN anterior de 6 dígitos numéricos para autorizar el cambio"
+      );
       error.status = 400;
       throw error;
     }
@@ -318,13 +342,41 @@ export class TiqueteraService {
       throw error;
     }
 
-    const pinHash = crypto.createHash("sha256").update(String(nuevo_pin).trim()).digest("hex");
+    const cleanPinAnterior = String(pin_anterior).trim();
+    const cleanNuevoPin = String(nuevo_pin).trim();
+
+    const pinAnteriorHash = crypto
+      .createHash("sha256")
+      .update(cleanPinAnterior)
+      .digest("hex");
+
+    if (pinAnteriorHash !== tiquetera.pin_hash) {
+      const error = new Error(
+        "El PIN anterior es incorrecto. Verifica tu PIN actual antes de realizar el cambio."
+      );
+      error.status = 401;
+      throw error;
+    }
+
+    const pinHash = crypto.createHash("sha256").update(cleanNuevoPin).digest("hex");
+    const fechaRegeneracion = new Date().toISOString();
 
     const tiqueteraActualizada = TiqueteraEntity.updateOne(tiquetera.id, {
       pin_hash: pinHash,
+      pin_actual: cleanNuevoPin,
       intentos_fallidos_pin: 0,
       bloqueado_hasta: null,
-      fecha_regeneracion_pin: new Date().toISOString(),
+      fecha_regeneracion_pin: fechaRegeneracion,
+    });
+
+    TiqueteraEntity.recordPinHistory({
+      tiquetera_id: tiquetera.id,
+      restaurante_id: tiquetera.restaurante_id,
+      cliente_id: tiquetera.cliente_id,
+      pin_anterior: tiquetera.pin_actual || cleanPinAnterior,
+      pin_nuevo: cleanNuevoPin,
+      origen: "CLIENTE",
+      fecha_hora: fechaRegeneracion,
     });
 
     return {
@@ -391,12 +443,12 @@ export class TiqueteraService {
    * HU-R4: Consulta y filtrado de tiqueteras
    * RF-17: filtros por nombre de cliente, estado y fecha de creación (YYYY-MM-DD).
    */
-  getAllTiqueteras({ cliente_id, cliente_nombre, estado, fecha_creacion } = {}) {
+  getAllTiqueteras({ cliente_id, cliente_nombre, estado, fecha_creacion, restaurante_id } = {}) {
     if (fecha_creacion && !/^\d{4}-\d{2}-\d{2}$/.test(fecha_creacion)) {
       throw new Error("La fecha de creación debe tener el formato YYYY-MM-DD");
     }
 
-    const filtros = { cliente_id, estado, fecha_creacion };
+    const filtros = { cliente_id, estado, fecha_creacion, restaurante_id };
 
     if (cliente_nombre) {
       const nombreBuscado = cliente_nombre.trim().toLowerCase();
@@ -412,5 +464,224 @@ export class TiqueteraService {
         cliente_nombre: cliente ? cliente.nombre : null,
       };
     });
+  }
+
+  /**
+   * Eliminar una tiquetera si se encuentra en estado PENDIENTE o FINALIZADA.
+   * Si forceAdmin es true (Superadministrador), permite eliminar independientemente de su estado.
+   */
+  deleteTiquetera(id, { forceAdmin = false } = {}) {
+    const tiquetera = TiqueteraEntity.findById(id);
+    if (!tiquetera) {
+      const error = new Error("Tiquetera no encontrada");
+      error.status = 404;
+      throw error;
+    }
+
+    if (tiquetera.estado === "ACTIVA" && !forceAdmin) {
+      const error = new Error(
+        "No se puede eliminar una tiquetera en estado ACTIVA porque se encuentra en uso. Solo se pueden eliminar tiqueteras por activar (PENDIENTE) o agotadas (FINALIZADA)."
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    TiqueteraEntity.deleteOne(tiquetera.id);
+    return {
+      mensaje: "Tiquetera eliminada exitosamente",
+      id: tiquetera.id,
+    };
+  }
+
+  /**
+   * SUPER_ADMIN: Cambiar el estado de cualquier tiquetera independientemente de su estado actual.
+   */
+  adminCambiarEstado(id, { estado }) {
+    const tiquetera = TiqueteraEntity.findById(id);
+    if (!tiquetera) {
+      const error = new Error("Tiquetera no encontrada");
+      error.status = 404;
+      throw error;
+    }
+
+    const estadoNormalizado = String(estado || "")
+      .trim()
+      .toUpperCase();
+    const estadosPermitidos = ["PENDIENTE", "ACTIVA", "FINALIZADA"];
+    if (!estadosPermitidos.includes(estadoNormalizado)) {
+      const error = new Error(
+        "Estado inválido. Los estados permitidos son: PENDIENTE, ACTIVA o FINALIZADA"
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    const ahoraIso = new Date().toISOString();
+    const updates = {
+      estado: estadoNormalizado,
+    };
+
+    if (estadoNormalizado === "ACTIVA") {
+      updates.codigo_usado = true;
+      if (!tiquetera.qr_token) {
+        updates.qr_token = crypto.randomUUID();
+      }
+      if (!tiquetera.fecha_activacion) {
+        updates.fecha_activacion = ahoraIso;
+      }
+      if (!tiquetera.pin_hash) {
+        const pinDefault =
+          tiquetera.codigo_activacion && /^\d{6}$/.test(String(tiquetera.codigo_activacion))
+            ? String(tiquetera.codigo_activacion)
+            : "123456";
+        updates.pin_hash = crypto.createHash("sha256").update(pinDefault).digest("hex");
+        updates.pin_actual = pinDefault;
+        TiqueteraEntity.recordPinHistory({
+          tiquetera_id: tiquetera.id,
+          restaurante_id: tiquetera.restaurante_id,
+          cliente_id: tiquetera.cliente_id,
+          pin_anterior: null,
+          pin_nuevo: pinDefault,
+          origen: "SUPER_ADMIN",
+          fecha_hora: ahoraIso,
+        });
+      }
+      if (tiquetera.almuerzos_disponibles <= 0) {
+        updates.almuerzos_disponibles = tiquetera.total_almuerzos;
+        updates.almuerzos_consumidos = 0;
+      }
+      updates.fecha_finalizacion = null;
+    } else if (estadoNormalizado === "FINALIZADA") {
+      updates.fecha_finalizacion = tiquetera.fecha_finalizacion || ahoraIso;
+    } else if (estadoNormalizado === "PENDIENTE") {
+      updates.codigo_usado = false;
+      if (!tiquetera.codigo_activacion) {
+        updates.codigo_activacion = crypto.randomInt(100000, 1000000).toString();
+      }
+      updates.fecha_expiracion_codigo = new Date(
+        Date.now() + 48 * 60 * 60 * 1000
+      ).toISOString();
+      updates.fecha_finalizacion = null;
+    }
+
+    const actualizada = TiqueteraEntity.updateOne(tiquetera.id, updates);
+    const cliente = ClienteEntity.findById(actualizada.cliente_id);
+    return {
+      mensaje: `Estado de la tiquetera actualizado a ${estadoNormalizado}`,
+      tiquetera: {
+        ...actualizada,
+        cliente_nombre: cliente ? cliente.nombre : null,
+      },
+    };
+  }
+
+  /**
+   * SUPER_ADMIN: Cambiar o restablecer el PIN de cualquier tiquetera y registrar trazabilidad.
+   */
+  adminCambiarPin(id, { nuevo_pin }) {
+    const tiquetera = TiqueteraEntity.findById(id);
+    if (!tiquetera) {
+      const error = new Error("Tiquetera no encontrada");
+      error.status = 404;
+      throw error;
+    }
+
+    if (!nuevo_pin || !/^\d{6}$/.test(String(nuevo_pin).trim())) {
+      const error = new Error("El nuevo PIN debe tener exactamente 6 dígitos numéricos");
+      error.status = 400;
+      throw error;
+    }
+
+    const cleanNuevoPin = String(nuevo_pin).trim();
+    const pinHash = crypto.createHash("sha256").update(cleanNuevoPin).digest("hex");
+    const fechaHora = new Date().toISOString();
+
+    const actualizada = TiqueteraEntity.updateOne(tiquetera.id, {
+      pin_hash: pinHash,
+      pin_actual: cleanNuevoPin,
+      intentos_fallidos_pin: 0,
+      bloqueado_hasta: null,
+      fecha_regeneracion_pin: fechaHora,
+    });
+
+    TiqueteraEntity.recordPinHistory({
+      tiquetera_id: tiquetera.id,
+      restaurante_id: tiquetera.restaurante_id,
+      cliente_id: tiquetera.cliente_id,
+      pin_anterior: tiquetera.pin_actual || null,
+      pin_nuevo: cleanNuevoPin,
+      origen: "SUPER_ADMIN",
+      fecha_hora: fechaHora,
+    });
+
+    const cliente = ClienteEntity.findById(actualizada.cliente_id);
+    return {
+      mensaje: "PIN actualizado exitosamente por el administrador",
+      tiquetera: {
+        ...actualizada,
+        cliente_nombre: cliente ? cliente.nombre : null,
+      },
+    };
+  }
+
+  /**
+   * SUPER_ADMIN: Consultar todas las tiqueteras con sus PINes actuales y la trazabilidad de cambios de PIN.
+   */
+  adminGetPinesYHistorial({ restaurante_id, tiquetera_id } = {}) {
+    const allTitulares = UserEntity.findMany({ role: "RESTAURANTE", es_titular: true });
+    const restMap = {};
+    for (const u of allTitulares) {
+      if (u.restaurante_id) {
+        restMap[u.restaurante_id] = u.name;
+      }
+    }
+
+    const filtrosTiq = {};
+    if (restaurante_id) filtrosTiq.restaurante_id = restaurante_id;
+    const rawTiqueteras = tiquetera_id
+      ? [TiqueteraEntity.findById(tiquetera_id)].filter(Boolean)
+      : TiqueteraEntity.findMany(filtrosTiq);
+
+    const historialRaw = TiqueteraEntity.findPinHistory({
+      restaurante_id,
+      tiquetera_id,
+    });
+
+    const tiqueteras = rawTiqueteras.map((tiq) => {
+      const cliente = ClienteEntity.findById(tiq.cliente_id);
+      const cambiosPin = historialRaw.filter((h) => h.tiquetera_id === tiq.id);
+      return {
+        ...tiq,
+        cliente_nombre: cliente ? cliente.nombre : "Cliente",
+        cliente_identificacion: cliente ? cliente.identificacion : null,
+        cliente_telefono: cliente ? cliente.telefono : null,
+        restaurante_nombre: restMap[tiq.restaurante_id] || tiq.restaurante_id || "General",
+        historial_pin: cambiosPin,
+      };
+    });
+
+    const tiqMap = {};
+    for (const t of tiqueteras) {
+      tiqMap[t.id] = t;
+    }
+
+    const historial = historialRaw.map((item) => {
+      const tiq = tiqMap[item.tiquetera_id] || TiqueteraEntity.findById(item.tiquetera_id);
+      const cliente = item.cliente_id ? ClienteEntity.findById(item.cliente_id) : null;
+      return {
+        ...item,
+        cliente_nombre: cliente ? cliente.nombre : tiq?.cliente_nombre || "Cliente",
+        cliente_identificacion: cliente ? cliente.identificacion : null,
+        restaurante_nombre:
+          restMap[item.restaurante_id] || item.restaurante_id || "General",
+        qr_token: tiq ? tiq.qr_token : null,
+        estado_tiquetera: tiq ? tiq.estado : null,
+      };
+    });
+
+    return {
+      tiqueteras,
+      historial,
+    };
   }
 }
