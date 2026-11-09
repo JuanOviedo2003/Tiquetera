@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../services/api';
 import { extractQrToken } from '../utils/qr';
+import QrScanner from '../components/QrScanner';
 import {
   Ticket,
   KeyRound,
@@ -9,6 +10,7 @@ import {
   Loader2,
   QrCode,
   Search,
+  Camera,
 } from 'lucide-react';
 
 /**
@@ -31,6 +33,7 @@ export default function ActivacionView({
 
   const [qrConsultaInput, setQrConsultaInput] = useState('');
   const [consultaError, setConsultaError] = useState(null);
+  const [scanningConsulta, setScanningConsulta] = useState(false);
 
   const handleActivar = async (e) => {
     e.preventDefault();
@@ -75,14 +78,26 @@ export default function ActivacionView({
   };
 
   const handleIrAConsulta = (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     const token = extractQrToken(qrConsultaInput);
     if (!token) {
       setConsultaError('Ingresa el token de tu QR o pega el enlace de tu tiquetera.');
       return;
     }
     setConsultaError(null);
+    setScanningConsulta(false);
     onOpenTiquetera?.(token);
+  };
+
+  const handleQrDetected = (detectedVal) => {
+    const token = extractQrToken(detectedVal);
+    if (token) {
+      setScanningConsulta(false);
+      setConsultaError(null);
+      onOpenTiquetera?.(token);
+    } else {
+      setConsultaError('No se pudo extraer un token QR válido.');
+    }
   };
 
   const inputClass =
@@ -253,8 +268,8 @@ export default function ActivacionView({
             <QrCode className="w-4 h-4 text-[#64829E]" />
             <span>¿Ya tienes una tiquetera activa? Consulta tu saldo e historial</span>
           </div>
-          <form onSubmit={handleIrAConsulta} className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
+          <form onSubmit={handleIrAConsulta} className="space-y-3">
+            <div className="relative">
               <Search className="w-4 h-4 text-[#64829E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
@@ -264,15 +279,29 @@ export default function ActivacionView({
                 className={`${inputClass} pl-10 font-mono text-xs`}
               />
             </div>
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#64829E] hover:bg-[#526E88] text-white text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0 touch-press"
-            >
-              <span>Consultar Saldo</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-[#64829E] hover:bg-[#526E88] text-white text-xs font-semibold shadow-sm transition-all cursor-pointer flex-1 touch-press"
+              >
+                <span>Consultar Saldo</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setScanningConsulta((s) => !s)}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-[#FF6B47] hover:bg-[#E85A37] text-white text-xs font-semibold shadow-sm transition-all cursor-pointer touch-press"
+              >
+                <Camera className="w-4 h-4" />
+                <span>{scanningConsulta ? 'Cerrar cámara' : 'Escanear QR'}</span>
+              </button>
+            </div>
           </form>
           {consultaError && <p className="text-xs text-[#FF6B47] font-medium">{consultaError}</p>}
+
+          {scanningConsulta && (
+            <QrScanner onDetected={handleQrDetected} onClose={() => setScanningConsulta(false)} />
+          )}
         </div>
       </main>
 
