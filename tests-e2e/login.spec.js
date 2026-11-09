@@ -1014,3 +1014,25 @@ test('HU-R6: deshabilita la validación si el PIN tiene menos de 6 dígitos', as
     page.getByRole('button', { name: 'Validar PIN' })
   ).toBeDisabled();
 });
+
+test('HU-C1: exige un código de activación de 6 dígitos', async ({ page }) => {
+  await page.goto('http://localhost:5174/activar');
+
+  const codigo = page.locator('#codigo-activacion');
+  const pin = page.locator('#pin-nuevo');
+  const confirmarPin = page.locator('#pin-confirmar');
+
+  await expect(codigo).toBeVisible();
+  await expect(pin).toBeVisible();
+  await expect(confirmarPin).toBeVisible();
+
+  await codigo.fill('12345');
+  await pin.fill('123456');
+  await confirmarPin.fill('123456');
+
+  await expect(
+    page.getByRole('button', {
+      name: /Activar Tiquetera y Obtener mi QR/i
+    })
+  ).toBeDisabled();
+});
