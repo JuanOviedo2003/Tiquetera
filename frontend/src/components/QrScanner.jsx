@@ -53,22 +53,48 @@ export default function QrScanner({ onDetected, onClose }) {
     scratchCanvasRef.current = document.createElement('canvas');
 
     async function start() {
-      if (!navigator.mediaDevices?.getUserMedia) {
+      // Intentar obtener getUserMedia moderno o fallback de versiones previas
+      const getMedia =
+        navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices) ||
+        navigator.getUserMedia?.bind(navigator) ||
+        navigator.webkitGetUserMedia?.bind(navigator) ||
+        navigator.mozGetUserMedia?.bind(navigator) ||
+        navigator.msGetUserMedia?.bind(navigator);
+
+      if (!getMedia) {
         setError(
-          'La cámara requiere conexión segura (HTTPS o localhost). Puedes subir la imagen del QR o pegar el token.'
+          'El navegador no soporta captura de video directa. Puedes subir la imagen del QR o pegar el token.'
         );
         return;
       }
 
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-          audio: false,
-        });
+        let mediaStream;
+        const videoConstraints = {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        };
+
+        if (navigator.mediaDevices?.getUserMedia) {
+          try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+              video: videoConstraints,
+              audio: false,
+            });
+          } catch {
+            // Intentar con restricción simple en caso de que facingMode o resoluciones específicas fallen
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+          }
+        } else {
+          // Fallback clásico con Promesa
+          mediaStream = await new Promise((resolve, reject) => {
+            getMedia({ video: true, audio: false }, resolve, reject);
+          });
+        }
 
         if (cancelled) {
           mediaStream.getTracks().forEach((track) => {
@@ -121,10 +147,11 @@ export default function QrScanner({ onDetected, onClose }) {
             }
           }
         }, 150);
-      } catch {
+      } catch (err) {
         if (!cancelled) {
+          // Si el navegador bloqueó la cámara por contexto o permiso denegado
           setError(
-            'No se pudo acceder a la cámara. Revisa el permiso, sube la imagen del QR o ingresa el token manualmente.'
+            'No se pudo acceder a la cámara. Puedes subir la imagen del QR o ingresar el identificador manualmente.'
           );
         }
       }
