@@ -7,6 +7,11 @@ on:
       - develop
   workflow_dispatch:
 
+# dev y develop despliegan en la misma carpeta del servidor: se encolan para no solaparse
+concurrency:
+  group: deploy-dev-server
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy via SSH
