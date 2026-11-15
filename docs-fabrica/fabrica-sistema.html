@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tiquetera — Fábrica del sistema (plano de planta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F9F5F1; --panel:#FFFFFF; --line:#E5DED4; --line2:#D6CEC2;
+    --txt:#333333; --mut:#5E6A77; --hi:#333333;
+    --pri:#FF6B47; --pri2:#E85A37; --slate:#64829E; --slate2:#526E88; --tint:#F3ECE4;
+    --mono:'Space Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--txt);font:14px/1.5 'Inter',system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;align-items:center;gap:20px;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+  header h1{font:600 16px 'Poppins',sans-serif;margin:0;letter-spacing:.02em;color:var(--hi)}
+  header h1 small{display:block;font:400 10px var(--mono);color:var(--mut);letter-spacing:.14em;text-transform:uppercase;margin-top:1px}
+  .ctrl{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+  .seg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+  button{font:500 12px var(--mono);color:var(--txt);background:transparent;border:0;padding:7px 12px;cursor:pointer;letter-spacing:.04em}
+  button:hover{background:var(--tint);color:var(--hi)}
+  button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+  .seg button[aria-pressed="true"]{background:var(--pri);color:#fff}
+  .seg button[aria-pressed="true"]:hover{background:var(--pri2)}
+  .btn{border:1px solid var(--line2);border-radius:6px}
+  .speed{display:flex;align-items:center;gap:6px;font:400 11px var(--mono);color:var(--mut)}
+  input[type=range]{accent-color:#FF6B47;width:90px}
+  main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 420px;min-height:0}
+  #stage{position:relative;min-height:0;background:
+    radial-gradient(ellipse at 50% 40%,#FFFFFF 0,#F9F5F1 72%);border-right:1px solid var(--line)}
+  #stage{overflow:auto}
+  #stage svg{width:100%;height:100%;display:block;transition:opacity .18s}
+  #stage.comp svg{width:1740px;height:900px;min-width:1740px}
+  #stage.swap svg{opacity:0}
+  .hud{position:absolute;left:14px;bottom:12px;font:400 10px var(--mono);color:var(--mut);line-height:1.7;pointer-events:none;letter-spacing:.04em}
+  .hud b{color:var(--txt);font-weight:700}
+  aside{background:var(--panel);overflow-y:auto;padding:20px 22px 40px;min-height:0}
+  aside .code{font:700 11px var(--mono);color:var(--mut);letter-spacing:.16em;text-transform:uppercase}
+  aside h2{font:600 22px 'Poppins',sans-serif;margin:4px 0 4px;color:var(--hi)}
+  aside .sum{color:var(--txt);margin:0 0 14px}
+  aside h3{font:700 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--mut);margin:20px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+  aside ul{margin:0;padding:0;list-style:none}
+  aside li{padding:4px 0 4px 14px;position:relative;font-size:13px}
+  aside li::before{content:"";position:absolute;left:0;top:13px;width:6px;height:1px;background:var(--mut)}
+  code,.f{font:400 11.5px var(--mono);color:var(--hi);background:var(--tint);border:1px solid var(--line);border-radius:3px;padding:0 4px;word-break:break-all}
+  .layers li{cursor:pointer;border-radius:4px;padding-left:22px}
+  .layers li::before{content:attr(data-i);width:auto;height:auto;background:none;font:700 10px var(--mono);color:var(--mut);top:7px}
+  .layers li:hover,.layers li.on{background:var(--tint)}
+  .layers li.on{outline:1px solid var(--pri)}
+  .layers li b{font:700 12px var(--mono);color:var(--hi)}
+  .alert{border:1px solid var(--line2);border-left:3px solid #FF6B47;background:#FFF4F0;padding:8px 10px;margin:6px 0;font-size:12.5px;border-radius:0 4px 4px 0}
+  .nav{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+  .nav button{border:1px solid var(--line2);border-radius:4px;font-size:11px}
+  .tag{display:inline-block;font:700 10px var(--mono);letter-spacing:.12em;border:1px solid var(--line2);border-radius:3px;padding:1px 6px;color:var(--mut);margin-left:6px;vertical-align:middle}
+  .idx{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .idx button{border:1px solid var(--line);border-radius:4px;text-align:left;padding:6px 8px;font-size:11px}
+  .idx button span{color:var(--mut);margin-right:6px}
+  .pin{font:400 10px var(--mono);color:var(--mut);margin-top:14px}
+
+  /* ===== SVG ===== */
+  .node{cursor:pointer;outline:none}
+  .layer{transition:transform .38s cubic-bezier(.2,.8,.2,1);transform:translateY(0)}
+  .node.open .layer{transform:translateY(calc(var(--i) * -22px))}
+  .top{transition:fill .15s}
+  .node:hover .top,.node.sel .top,.node:focus .top{fill:#FF6B47}
+  .node.busy .top{fill:#FFB4A1}
+  .node.sel .edge{stroke:#E85A37;stroke-width:1.8}
+  .hit{fill:transparent;pointer-events:none}
+  .node.open .hit{pointer-events:all}
+  .tags{pointer-events:none}
+  .tg{opacity:0;transition:opacity .2s}
+  .tg.on{opacity:1}
+  .belt-dash{stroke-dasharray:3 9;animation:flow 1.1s linear infinite}
+  .rev .belt-dash{animation-direction:normal}
+  @keyframes flow{to{stroke-dashoffset:-12}}
+  svg.paused .belt-dash{animation-play-state:paused}
+  .lbl{font:700 10px var(--mono);fill:#5E6A77;letter-spacing:.1em;pointer-events:none}
+  .lbl.on{fill:#E85A37}
+  .big .lbl{font-size:13px}
+  @media (prefers-reduced-motion:reduce){.layer{transition:none}.belt-dash{animation:none}}
+  @media (max-width:980px){
+    body{overflow:auto}
+    main{grid-template-columns:1fr;display:block}
+    #stage{height:60vh;border-right:0;border-bottom:1px solid var(--line)}
+    aside{overflow:visible}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Tiquetera · Fábrica del sistema<small>Plano de planta · Rev. 2026-11-15 · fuente: docs-fabrica/ARQUITECTURA.md</small></h1>
+  <div class="ctrl">
+    <button id="pause" class="btn" aria-pressed="false" title="Atajo: P">❚❚ PAUSAR FLUJO</button>
+    <label class="speed">VEL <input id="speed" type="range" min="0.25" max="2.5" step="0.25" value="1" aria-label="Velocidad del flujo"></label>
+    <div class="seg" role="group" aria-label="Selector de vista">
+      <button id="v-planta" aria-pressed="true">VISTA DE PLANTA</button>
+      <button id="v-comp" aria-pressed="false">COMPONENTES INTERNOS</button>
+    </div>
+  </div>
+</header>
+<main>
+  <div id="stage">
+    <svg id="svg" role="img" aria-label="Línea de ensamblaje isométrica del sistema Tiquetera"></svg>
+    <div class="hud">
+      <b>PASAR EL CURSOR</b> resalta y desarma · <b>CLIC</b> fija la estación · <b>ESC</b> suelta · <b>P</b> pausa<br>
+      Fila A: entrada y enrutado → Fila B (←): negocio y datos → Fila C: acabado, entrega y soporte
+    </div>
+  </div>
+  <aside id="panel" aria-live="polite"></aside>
+</main>
+
+<script>
+/* =========================================================
+   DATOS — derivados de docs-fabrica/ARQUITECTURA.md
+   ========================================================= */
+const B='backend/src/modules/';
+const ST=[
+ {id:'ent',code:'00',name:'ENTRADAS',kind:'Materia prima',u:0,v:0,shape:'box',
+  sum:'Todo lo que entra al sistema: peticiones HTTP JSON, URLs públicas del navegador, cámara/imagen QR, variables de entorno y eventos de despliegue.',
+  files:['backend/app.js (express.json, cors)','frontend/src/services/api.js','frontend/src/App.jsx (parseRouteFromUrl)','frontend/src/components/QrScanner.jsx','frontend/src/utils/qr.js','.github/workflows/deployment-main.yml'],
+  recibe:['Peticiones JSON a /api/login, /users, /clientes, /tiqueteras, /consumos, /rejilla y GET /health','URLs públicas: /tiquetera/<token>, /qr/<token>, ?qr=, /activar, ?codigo=','Fotograma de cámara o imagen con QR (jsQR; BarcodeDetector como respaldo)','localStorage["tiquetera_auth_user"] (sesión rehidratada)','Env: PORT, NODE_ENV, DATABASE_URL, DB_PATH, VITE_API_URL','Evento push a main / workflow_dispatch'],
+  trans:['No transforma: solo clasifica por origen. api.js normaliza todo a fetch(VITE_API_URL || "/api").','extractQrToken() acepta el UUID suelto o la URL completa del QR.'],
+  entrega:['Todo el tráfico HTTP pasa a 01 · Bootstrap','Las variables de entorno las consume 02 · Config de datos','El push a main alimenta 11 · Despliegue'],
+  layers:[{n:'API HTTP /api',d:'Peticiones JSON de las vistas y clientes externos'},{n:'URL pública SPA',d:'/tiquetera/<token> y /activar?codigo='},{n:'Cámara · imagen QR',d:'QrScanner.jsx + utils/qr.js'},{n:'Env · push a main',d:'PORT, DATABASE_URL, DB_PATH, VITE_API_URL; workflow SSH'}],
+  alerts:['Ninguna entrada se autentica: la API acepta cualquier petición.']},
+
+ {id:'boot',code:'01',name:'BOOTSTRAP',kind:'Servidor HTTP',u:1,v:0,shape:'box',
+  sum:'Punto de arranque Express: monta los routers, sirve el SPA compilado y decide los 404.',
+  files:['backend/app.js'],
+  recibe:['Toda petición HTTP entrante','PORT (3000 por defecto)'],
+  trans:['cors() + express.json() (app.js:17-18).','Monta /api/users, /api/clientes, /api/tiqueteras, /api/consumos, /api/login, /api/rejilla y GET /health.','Busca frontend/dist en 4 rutas candidatas y lo sirve estático; para GET fuera de /api devuelve index.html (fallback SPA).','404 JSON {error:"Ruta no encontrada"}.','No abre el puerto en entorno de test (NODE_ENV=test, --test o argv con "test").','Tras listen() llama connectPrisma().'],
+  entrega:['Respuestas JSON y archivos estáticos del SPA','export { app, server } para las pruebas','Enruta al módulo correspondiente (03–08)'],
+  layers:[{n:'cors + json',d:'Middlewares globales'},{n:'routers /api/*',d:'Seis routers montados'},{n:'static + fallback SPA',d:'Sirve frontend/dist'},{n:'404 + listen',d:'Cierre y arranque; connectPrisma()'}],
+  alerts:['No hay middleware de autenticación ni de roles en toda la app.','El orden de planta es didáctico; el enrutado real lo hace Express hacia el módulo que corresponda.']},
+
+ {id:'login',code:'03',name:'LOGIN',kind:'Módulo',u:2,v:0,shape:'box',
+  sum:'Autentica por email y contraseña; no emite token.',
+  files:[B+'login/login.route.js',B+'login/login.controller.js',B+'login/login.service.js',B+'login/login.entity.js'],
+  recibe:['POST /api/login {email, password}'],
+  trans:['Normaliza el email (trim + minúsculas); 400 si falta email o contraseña.','Busca en UserEntity.findByEmail y, si no existe, en seedUsers (memoria).','Compara bcrypt.compareSync con passwordHash, o igualdad directa con password (legado en texto plano).','401 "Credenciales inválidas"; 403 "Usuario inactivo".','Elimina password y passwordHash del objeto.'],
+  entrega:['200 {mensaje, usuario} — sin JWT ni sesión','El frontend decide el rol con AuthContext (isSuperAdmin si role === "SUPER_ADMIN")'],
+  layers:[{n:'login.route.js',d:'POST /'},{n:'login.controller.js',d:'Extrae body, mapea statusCode'},{n:'login.service.js',d:'Validación, bcrypt, estado activo'},{n:'login.entity.js',d:'UserEntity + seedUsers en memoria'}],
+  alerts:['Sin token: el cliente guarda el usuario en localStorage y el backend no vuelve a verificarlo.','Soporta contraseñas en texto plano (campo password) de la semilla.']},
+
+ {id:'user',code:'04',name:'USUARIOS',kind:'Módulo',u:3,v:0,shape:'box',
+  sum:'Cuentas del restaurante y gestión de restaurantes por el superusuario.',
+  files:[B+'user/routes/user.route.js',B+'user/controllers/user.controller.js',B+'user/services/user.service.js',B+'user/entity/user.entity.js'],
+  recibe:['GET/POST /api/users','GET/POST /api/users/restaurantes','PUT/DELETE /api/users/restaurantes/:id'],
+  trans:['Valida campos y email único; bcrypt.hashSync(password, 10).','Un "restaurante" es un usuario RESTAURANTE con es_titular=true y restaurante_id = REST-<timestamp>-<rand>; los empleados comparten restaurante_id.','buildResumenRestaurante: conteos PENDIENTE/ACTIVA/FINALIZADA y valor estimado (precio_tiquetera).','updateRestaurante propaga active a todo el equipo.','deleteRestaurante → deleteRestauranteCascade: borra movimientos, pin_historial, tiqueteras, clientes y usuarios.'],
+  entrega:['Usuarios sin password/passwordHash','Restaurantes con total_equipo y resumen_tiqueteras'],
+  layers:[{n:'user.route.js',d:'Rutas /restaurantes antes de /'},{n:'user.controller.js',d:'400/404 desde error.status'},{n:'user.service.js',d:'Reglas, bcrypt, resumen'},{n:'user.entity.js',d:'SQL sobre users + cascada'}],
+  alerts:['Crear, editar y borrar restaurantes (en cascada) no exige rol en el backend.']},
+
+ {id:'cli',code:'05',name:'CLIENTES',kind:'Módulo',u:4,v:0,shape:'box',
+  sum:'Registro y consulta de clientes por restaurante.',
+  files:[B+'cliente/routes/cliente.route.js',B+'cliente/controllers/cliente.controller.js',B+'cliente/services/cliente.service.js',B+'cliente/entity/cliente.entity.js'],
+  recibe:['POST /api/clientes {nombre, identificacion, telefono?, restaurante_id}','GET /api/clientes?restaurante_id, GET /:id y /search/:id'],
+  trans:['Exige nombre e identificación y restaurante_id.','Teléfono opcional con regex ^\\d{7,15}$.','Rechaza identificación duplicada dentro del mismo restaurante.'],
+  entrega:['Registro de cliente o listado filtrado'],
+  layers:[{n:'cliente.route.js',d:'GET/POST /, GET /:id'},{n:'cliente.controller.js',d:'Respuestas HTTP'},{n:'cliente.service.js',d:'Validaciones y unicidad'},{n:'cliente.entity.js',d:'SQL sobre clientes'}],
+  alerts:[]},
+
+ {id:'tiq',code:'06',name:'TIQUETERAS',kind:'Módulo núcleo',u:4,v:1,shape:'box',
+  sum:'Ciclo de vida de la tiquetera: creación, activación, PIN, QR, vista pública y administración.',
+  files:[B+'tiquetera/routes/tiquetera.route.js',B+'tiquetera/controllers/tiquetera.controller.js',B+'tiquetera/services/tiquetera.service.js (687 líneas)',B+'tiquetera/entity/tiquetera.entity.js'],
+  recibe:['POST/GET /api/tiqueteras (filtros: cliente_id, cliente_nombre, estado, fecha_creacion, restaurante_id)','POST /activar, /validar-pin, /regenerar-pin, /:id/reemitir-codigo','GET /qr/:token, /public/qr/:token, /:id/codigo-activacion, /admin/pines','PUT /:id/admin-pin, /:id/estado · DELETE /:id (?admin=true | ?force=true)'],
+  trans:['Creación: estado PENDIENTE, código crypto.randomInt(100000,1000000), vence en 48 h; reemisión solo en PENDIENTE.','Activación: valida código vigente y PIN ^\\d{6}$; pin_hash = SHA-256; qr_token = crypto.randomUUID(); estado ACTIVA; registra pin_historial (ACTIVACION).','validar-pin: 3 fallos → bloqueado_hasta +15 min (HTTP 403); acierto resetea intentos.','regenerar-pin: exige PIN anterior; origen CLIENTE.','Vista pública: saldo y movimientos agrupados por día, sin PIN.','Admin: cambiar estado (reglas de reactivación), cambiar PIN (origen SUPER_ADMIN), listar PINes con historial, eliminar.'],
+  entrega:['Tiquetera con cliente_nombre, saldo {total, consumidos, disponibles} y qr_token','Errores {error} con 400/401/403/404'],
+  layers:[{n:'tiquetera.route.js',d:'~20 rutas; /admin/pines antes de /:id'},{n:'tiquetera.controller.js',d:'Mapea errores a HTTP'},{n:'tiquetera.service.js',d:'Estados, códigos, PIN, bloqueo, admin'},{n:'tiquetera.entity.js',d:'tiqueteras + pin_historial (SQL)'}],
+  alerts:['Rutas admin-pin, estado, admin/pines y DELETE ?admin=true sin credenciales.','pin_actual y pin_historial guardan PINes en claro; pin_hash es SHA-256 sin sal.']},
+
+ {id:'con',code:'07',name:'CONSUMOS',kind:'Módulo',u:3,v:1,shape:'box',
+  sum:'Descuenta almuerzos validando el PIN y corrige consumos del mismo día con movimientos inmutables.',
+  files:[B+'consumo/routes/consumo.route.js',B+'consumo/controllers/consumo.controller.js',B+'consumo/services/consumo.service.js',B+'consumo/entity/consumo.entity.js'],
+  recibe:['POST /api/consumos {tiquetera_id, pin, cantidad, usuario_id, cuadros_seleccionados[]}','POST /api/consumos/reversa {consumo_id, usuario_id, cuadro_deseleccionado, motivo}','GET /api/consumos/tiquetera/:id?fecha=YYYY-MM-DD'],
+  trans:['registrarConsumo: exige estado ACTIVA, comprueba bloqueo y PIN SHA-256 (3 intentos / 15 min) y saldo suficiente; actualiza consumidos/disponibles; pasa a FINALIZADA al llegar a 0; inserta movimiento CONSUMO.','revertirConsumo: solo el mismo día (UTC), un cuadro una sola vez; inserta movimiento REVERSA (no borra el original), recalcula saldo y reactiva la tiquetera.'],
+  entrega:['201/200 {mensaje, movimiento, tiquetera}','Historial de movimientos filtrable por fecha'],
+  layers:[{n:'consumo.route.js',d:'POST /, POST /reversa, GET /tiquetera/:id'},{n:'consumo.controller.js',d:'status = error.status || 400'},{n:'consumo.service.js',d:'PIN, saldo, finalización, reversas'},{n:'consumo.entity.js',d:'movimientos; cuadros_seleccionados en JSON'}],
+  alerts:['"Mismo día" se calcula con toISOString().slice(0,10): UTC, no hora local.']},
+
+ {id:'rej',code:'08',name:'REJILLA',kind:'Módulo',u:2,v:1,shape:'box',
+  sum:'Reconstruye la rejilla visual de cuadros consumidos/disponibles desde el historial.',
+  files:[B+'rejilla/rejilla.route.js',B+'rejilla/rejilla.controller.js',B+'rejilla/rejilla.service.js',B+'rejilla/rejilla.entity.js'],
+  recibe:['GET /api/rejilla/:qrToken'],
+  trans:['Reproduce en orden los movimientos CONSUMO/REVERSA sobre los cuadros 1..total_almuerzos (mapa cuadro → fecha).','Si faltan cuadros respecto a almuerzos_consumidos, los asigna en orden.','Si el token no existe en BD, cae a datos mock en memoria (ABC123, XYZ789, PEN001).'],
+  entrega:['{qr_token, estado, cliente, saldo, rejilla:[{numero, estado:"consumido"|"disponible", fechaConsumo}]}'],
+  layers:[{n:'rejilla.route.js',d:'GET /:qrToken'},{n:'rejilla.controller.js',d:'Responde JSON'},{n:'rejilla.service.js',d:'Reconstrucción por movimientos'},{n:'rejilla.entity.js',d:'Mock en memoria de respaldo'}],
+  alerts:[]},
+
+ {id:'cfg',code:'02',name:'CONFIG DE DATOS',kind:'Configuración',u:1,v:1,shape:'box',
+  sum:'Abre la base SQLite, crea el esquema y siembra usuarios; también prepara el cliente Prisma.',
+  files:['backend/src/config/database.js','backend/src/config/prisma.js','backend/prisma/schema.prisma'],
+  recibe:['DB_PATH, NODE_ENV / argumentos de test','DATABASE_URL'],
+  trans:['database.js: DatabaseSync de node:sqlite → backend/data/tiquetera.db (o :memory: en test), WAL y foreign_keys.','initSchema() al importarse: CREATE TABLE IF NOT EXISTS + ALTER TABLE ADD COLUMN tolerantes; seedDefaultUsers().','prisma.js: PrismaClient; si hay DATABASE_URL conecta y siembra 2 usuarios demo en Mongo.'],
+  entrega:['El objeto db que usan todas las entities','prisma no lo usa ningún módulo de negocio'],
+  layers:[{n:'database.js · db',d:'DatabaseSync + PRAGMAs'},{n:'initSchema()',d:'5 tablas + ALTER TABLE'},{n:'seedDefaultUsers()',d:'admin, demo y cocina'},{n:'prisma.js',d:'PrismaClient + seed Mongo'}],
+  alerts:['La semilla guarda contraseñas en texto plano (admin123, 1234, cocina123).','schema.prisma está desalineado con el esquema SQLite (sin pin_historial, restaurante_id, es_titular…).']},
+
+ {id:'alm',code:'AL',name:'ALMACENES',kind:'Almacén',u:0,v:1,shape:'drum',
+  sum:'Dónde persiste y vive el estado: SQLite real, Prisma/Mongo sin uso, memoria y navegador.',
+  files:['backend/data/tiquetera.db','backend/prisma/schema.prisma','backend/src/modules/login/login.entity.js (seedUsers)','backend/src/modules/rejilla/rejilla.entity.js (mock)','frontend/src/context/AuthContext.jsx'],
+  recibe:['SQL desde las entities (db.prepare)','Escrituras del navegador a localStorage'],
+  trans:['Tablas SQLite: users, clientes, tiqueteras, movimientos, pin_historial.','Los IDs son texto generado en código (TIQ-<ts>-<rand>, MOV-…, REST-…).','Prisma/MongoDB: User, Cliente, Tiquetera, Movimiento — solo conexión y semilla.','Memoria: seedUsers y tiqueteras mock de respaldo.','Docker: volúmenes mongo_data_dev y backend_data_dev.'],
+  entrega:['Filas hacia las entities','Datos para las salidas JSON y la rejilla'],
+  layers:[{n:'SQLite · 5 tablas',d:'users · clientes · tiqueteras · movimientos · pin_historial'},{n:'Prisma + MongoDB',d:'Presente, sin uso funcional'},{n:'Memoria · localStorage',d:'seedUsers, mock, tiquetera_auth_user'}],
+  alerts:['Doble persistencia: docker-compose levanta Mongo aunque el negocio use SQLite.','pin_actual, pin_anterior y pin_nuevo se guardan sin cifrar.']},
+
+ {id:'sal',code:'SA',name:'SALIDAS',kind:'Producto terminado',u:0,v:2,shape:'out',
+  sum:'Lo que el sistema devuelve: JSON, QR y enlaces, la SPA servida y el health check.',
+  files:['backend/app.js (/health, estático)','frontend/src/utils/qr.js (renderQrToCanvas, buildClienteUrl, buildActivacionUrl)','frontend/nginx/nginx.conf'],
+  recibe:['Resultados de los módulos 03–08'],
+  trans:['Serialización JSON con {mensaje, …} o {error} y códigos 200/201/400/401/403/404.','Genera el QR (librería qrcode) con la URL /tiquetera/<qr_token> y enlaces /activar?codigo=…'],
+  entrega:['Saldo, rejilla, historial (también por día), resumen de restaurante, historial de PINes','Aplicación web (frontend/dist) vía Express o Nginx','GET /health → {status:"ok"}','Sin integraciones externas: no hay correo, SMS, pagos ni APIs de terceros'],
+  layers:[{n:'JSON de la API',d:'Objetos de negocio y errores'},{n:'QR + enlaces',d:'Canvas del pase y URLs públicas'},{n:'SPA servida',d:'Express o Nginx con proxy /api/'},{n:'GET /health',d:'Usado por el HEALTHCHECK de Docker'}],
+  alerts:['login devuelve el usuario sin token.']},
+
+ {id:'fe',code:'09',name:'FRONTEND SPA',kind:'Interfaz',u:1,v:2,shape:'box',
+  sum:'React 19 + Vite 8 + Tailwind 4: consola del restaurante, vistas públicas del cliente y panel del superusuario.',
+  files:['frontend/src/main.jsx → App.jsx','frontend/src/context/AuthContext.jsx','frontend/src/services/api.js','frontend/src/utils/qr.js','frontend/src/views/*.jsx','frontend/vite.config.js'],
+  recibe:['URL, acciones del usuario y localStorage'],
+  trans:['Sin librería de router: window.history.pushState + popstate; parseRouteFromUrl() decide el modo.','Públicas: ActivacionView, ClienteTiqueteraView (con QrPassCard, HistorialMovimientos, QrScanner).','Restaurante (pestañas en Navbar): TiqueterasView, ConsumoView (RejillaGrid), ClientesView, UsuariosView.','SUPER_ADMIN: SuperAdminView (1775 líneas).','Vite: Tailwind + React Compiler; proxy /api → localhost:3000 en dev (puerto 5173).'],
+  entrega:['UI compilada a frontend/dist','Llamadas a /api desde services/api.js'],
+  layers:[{n:'App.jsx · AuthProvider',d:'Ruta por URL y rol'},{n:'Vistas públicas',d:'Activación y consulta por QR'},{n:'Vistas restaurante',d:'Tiqueteras, Consumo, Clientes, Usuarios'},{n:'SuperAdminView',d:'Restaurantes, PINes, estados'},{n:'services/api.js',d:'fetch a /api'},{n:'utils/qr.js',d:'QR, escáner, portapapeles HTTP'}],
+  alerts:['El control de rol vive solo aquí: el backend no lo verifica.']},
+
+ {id:'test',code:'10',name:'PRUEBAS',kind:'Calidad',u:2,v:2,shape:'box',
+  sum:'Cuatro archivos con node --test sobre SQLite en memoria.',
+  files:['backend/tests/api-http.test.js','backend/tests/historias-de-usuario-completas.test.js','backend/tests/tiquetera-consumo.test.js','backend/tests/tiquetera-filtrado.test.js'],
+  recibe:['La app Express en puerto efímero (app.listen(0))','Entities y services importados directamente'],
+  trans:['database.js detecta el entorno de test y usa :memory:.','Cubren HU-R1 a HU-R12 y HU-C1 a HU-C5.'],
+  entrega:['Resultado de npm test','No hay pruebas del frontend (solo eslint)'],
+  layers:[{n:'api-http.test.js',d:'Integración HTTP'},{n:'historias-…-completas',d:'Todas las HU'},{n:'tiquetera-consumo',d:'Ciclo activación y consumo'},{n:'tiquetera-filtrado',d:'Filtros de listado'}],
+  alerts:[]},
+
+ {id:'dep',code:'11',name:'DESPLIEGUE',kind:'Infraestructura',u:3,v:2,shape:'box',
+  sum:'Docker + GitHub Actions: cada push a main reconstruye y levanta el stack en el servidor por SSH.',
+  files:['Dockerfile (raíz, multi-stage Node 22-slim)','backend/Dockerfile (Node 24-slim)','frontend/Dockerfile → nginx:alpine','frontend/nginx/nginx.conf','docker-compose.yml','.github/workflows/deployment-main.yml'],
+  recibe:['push a main o workflow_dispatch'],
+  trans:['appleboy/ssh-action@v1.0.0: git pull origin main, docker compose down, docker compose up --build -d.','Compose: mongo:7.0 (rs0, host 29474), backend (29473→3000), frontend (9081→80).','Nginx: try_files para el SPA y proxy /api/ → http://backend:3000.','HEALTHCHECK del Dockerfile raíz contra /health.'],
+  entrega:['Aplicación desplegada','Volumen backend_data_dev:/app/data para el backend'],
+  layers:[{n:'Dockerfiles',d:'Raíz, backend y frontend'},{n:'docker-compose.yml',d:'mongo + backend + frontend'},{n:'nginx.conf',d:'SPA + proxy /api/'},{n:'deployment-main.yml',d:'Despliegue por SSH'}],
+  alerts:['Los Dockerfiles generan el cliente Prisma aunque el negocio no lo use.']}
+];
+const BY=Object.fromEntries(ST.map(s=>[s.id,s]));
+/* orden físico de la línea (cinta) */
+const FLOW=['ent','boot','login','user','cli','tiq','con','rej','cfg','alm','sal','fe','test','dep'];
+
+/* =========================================================
+   MOTOR ISOMÉTRICO
+   ========================================================= */
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('svg'),stage=document.getElementById('stage'),panel=document.getElementById('panel');
+const mk=(t,a={},p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const W=118,HL=13,F=.46;
+let mode='planta',running=!matchMedia('(prefers-reduced-motion:reduce)').matches,speed=1;
+let hoverId=null,pinId=null,scene=null;
+
+function cfg(){return mode==='planta'
+  ?{SV:1,ox:400,oy:175,vb:[1020,640]}
+  :{comp:true,SV:1,cx:175,cy:255,CW:305,CH:265,vb:[1740,900]}}
+function iso(u,v,z=0){
+  const c=cfg();
+  if(c.comp){ // lámina de despiece: cada estación en su celda, dibujada en isométrico
+    const ru=Math.round(u),rv=Math.round(v),du=u-ru,dv=v-rv;
+    return[c.cx+ru*c.CW+(du-dv)*W,c.cy+rv*c.CH+(du+dv)*W/2-z];
+  }
+  return[c.ox+(u-v)*W,c.oy+(u+v)*W/2-z]}
+const pts=a=>a.map(p=>p.join(',')).join(' ');
+
+/* tonos (solo grises) */
+const TONE={top:'#B6C7D8',l:'#64829E',r:'#526E88',edge:'#333333'};
+
+function boxLayer(g,u,v,z0,i,s){
+  const u0=u-F/2,u1=u+F/2,v0=v-F/2,v1=v+F/2,z1=z0+HL;
+  const T=[iso(u0,v0,z1),iso(u1,v0,z1),iso(u1,v1,z1),iso(u0,v1,z1)];
+  const L=[iso(u0,v1,z0),iso(u1,v1,z0),iso(u1,v1,z1),iso(u0,v1,z1)];
+  const R=[iso(u1,v0,z0),iso(u1,v1,z0),iso(u1,v1,z1),iso(u1,v0,z1)];
+  mk('polygon',{points:pts(L),fill:TONE.l,stroke:TONE.edge,'stroke-width':1,class:'edge'},g);
+  mk('polygon',{points:pts(R),fill:TONE.r,stroke:TONE.edge,'stroke-width':1,class:'edge'},g);
+  const top=mk('polygon',{points:pts(T),fill:TONE.top,stroke:TONE.edge,'stroke-width':1,class:'top edge'},g);
+  /* líneas de panel en caras laterales */
+  const m=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  mk('line',{x1:m(L[0],L[3])[0]+6,y1:m(L[0],L[3])[1],x2:m(L[1],L[2])[0]-6,y2:m(L[1],L[2])[1],stroke:'#8DA6BD','stroke-width':.8},g);
+  return {T,top};
+}
+function drumLayer(g,u,v,z0,i){
+  const c=iso(u,v,z0),rx=.3*Math.SQRT2*W,ry=rx/2,cyB=c[1],cyT=cyB-HL;
+  mk('path',{d:`M${c[0]-rx},${cyT} L${c[0]-rx},${cyB} A${rx},${ry} 0 0 0 ${c[0]+rx},${cyB} L${c[0]+rx},${cyT} Z`,fill:'url(#hatch)',stroke:TONE.edge,'stroke-width':1,class:'edge'},g);
+  const top=mk('ellipse',{cx:c[0],cy:cyT,rx,ry,fill:TONE.top,stroke:TONE.edge,'stroke-width':1,class:'top edge'},g);
+  mk('ellipse',{cx:c[0],cy:cyT,rx:rx*.72,ry:ry*.72,fill:'none',stroke:'#64829E','stroke-width':.8},g);
+  return {T:[[c[0],cyT]],top};
+}
+
+const scene_lt={};
+function build(){
+  const c=cfg();
+  svg.innerHTML='';svg.setAttribute('viewBox',`0 0 ${c.vb[0]} ${c.vb[1]}`);
+  svg.classList.toggle('big',mode!=='planta');svg.classList.toggle('paused',!running);
+  const defs=mk('defs',{},svg);
+  const pat=mk('pattern',{id:'hatch',width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},defs);
+  mk('rect',{width:6,height:6,fill:'#B6C7D8'},pat);mk('line',{x1:0,y1:0,x2:0,y2:6,stroke:'#64829E','stroke-width':2},pat);
+
+  /* piso: plano técnico */
+  const maxU=4.6,maxV=2.6,minU=-.6,minV=-.6; // coordenadas lógicas
+  const sv=c.SV;
+  const floor=[iso(minU,minV),iso(maxU,minV),iso(maxU,maxV),iso(minU,maxV)];
+  const fg=mk('g',{},svg);
+  const thick=8;
+  if(c.comp){
+    mk('rect',{x:16,y:16,width:c.vb[0]-32,height:c.vb[1]-32,fill:'none',stroke:'#D6CEC2','stroke-dasharray':'6 6'},fg);
+    const hdr=mk('text',{x:34,y:44,'font-family':'Space Mono, monospace','font-size':13,fill:'#5E6A77','letter-spacing':'.14em'},fg);
+    hdr.textContent='LÁMINA DE DESPIECE · UNA CELDA POR ESTACIÓN · PIEZAS DE ABAJO HACIA ARRIBA: route → controller → service → entity';
+  }else{
+  mk('polygon',{points:pts([floor[3],floor[2],[floor[2][0],floor[2][1]+thick],[floor[3][0],floor[3][1]+thick]]),fill:'#E5DED4',stroke:'#D6CEC2'},fg);
+  mk('polygon',{points:pts([floor[2],floor[1],[floor[1][0],floor[1][1]+thick],[floor[2][0],floor[2][1]+thick]]),fill:'#D6CEC2',stroke:'#CFC7BC'},fg);
+  mk('polygon',{points:pts(floor),fill:'#FFFFFF',stroke:'#D6CEC2','stroke-width':1.2},fg);
+  for(let uu=Math.ceil(minU);uu<=maxU;uu+=.5){const a=iso(uu,minV),b=iso(uu,maxV);mk('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:uu%1?'#F4EEE6':'#E5DED4','stroke-width':.7},fg)}
+  for(let vv=Math.ceil(minV);vv<=maxV;vv+=.5){const a=iso(minU,vv),b=iso(maxU,vv);mk('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:vv%1?'#F4EEE6':'#E5DED4','stroke-width':.7},fg)}
+  }
+
+  /* cinta transportadora */
+  const path=FLOW.map(id=>BY[id]);
+  const bg=mk('g',{},svg);
+  const P=path.map(s=>iso(s.u,s.v,0));
+  const segLen=[0];
+  for(let i=1;i<P.length;i++)segLen.push(segLen[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));
+  const BW=.13;
+  for(let i=1;i<path.length;i++){
+    const a=path[i-1],b=path[i];const du=Math.sign(b.u-a.u),dv=Math.sign(b.v-a.v);
+    const pu=dv?BW:0,pv=du?BW:0; // perpendicular
+    const q=[iso(a.u-pu,a.v-pv),iso(b.u-pu,b.v-pv),iso(b.u+pu,b.v+pv),iso(a.u+pu,a.v+pv)];
+    const aux=i>=10;
+    if(!c.comp)mk('polygon',{points:pts(q),fill:'#EFE8DF',stroke:'#CFC7BC','stroke-width':1,'stroke-dasharray':aux?'4 3':'none'},bg);
+    const A=iso(a.u,a.v),Bp=iso(b.u,b.v);
+    mk('line',{x1:A[0],y1:A[1],x2:Bp[0],y2:Bp[1],stroke:'#64829E','stroke-width':1.4,class:'belt-dash'},bg);
+    /* chevron de dirección al centro */
+    const mx=(A[0]+Bp[0])/2,my=(A[1]+Bp[1])/2,ang=Math.atan2(Bp[1]-A[1],Bp[0]-A[0])*180/Math.PI;
+    mk('polygon',{points:'-5,-4 4,0 -5,4',fill:'#FF6B47',transform:`translate(${mx},${my}) rotate(${ang})`},bg);
+  }
+
+  /* paquetes de datos (debajo de los bloques → "entran" a las estaciones) */
+  const total=segLen[segLen.length-1];
+  const pk=mk('g',{},svg);
+  const packets=[];
+  const N=10;
+  for(let k=0;k<N;k++){
+    const g=mk('g',{},pk);
+    const dark=k%3===0;
+    const s=5;
+    mk('polygon',{points:`0,${-s} ${s*1.7},${-s/2+0} 0,${0} ${-s*1.7},${-s/2}`,fill:dark?'#FF8F73':'#FF6B47',stroke:'#333333','stroke-width':.8},g);
+    mk('polygon',{points:`${-s*1.7},${-s/2} 0,0 0,${s*1.3} ${-s*1.7},${s*.6}`,fill:dark?'#E85A37':'#D9502F',stroke:'#333333','stroke-width':.8},g);
+    mk('polygon',{points:`${s*1.7},${-s/2} 0,0 0,${s*1.3} ${s*1.7},${s*.6}`,fill:dark?'#C94A2B':'#B8401F',stroke:'#333333','stroke-width':.8},g);
+    packets.push({g,s:k/N*total});
+  }
+
+  /* estaciones — orden de pintura: u+v ascendente */
+  const order=[...ST].sort((a,b)=>(a.u+a.v*sv)-(b.u+b.v*sv)||a.v-b.v);
+  const nodes={},tags=mk('g',{class:'tags'});
+  for(const s of order){
+    const g=mk('g',{class:'node',tabindex:0,role:'button','aria-label':`Estación ${s.code} ${s.name}. ${s.kind}`,'data-id':s.id},svg);
+    const nl=s.layers.length;
+    /* área de impacto cuando está desarmado */
+    const base=iso(s.u,s.v,0),exTop=(nl-1)*22+nl*HL;
+    mk('rect',{class:'hit',x:base[0]-F*W*1.05,y:base[1]-exTop-F*W*.55,width:F*W*2.1,height:exTop+F*W*1.1},g);
+    let topInfo;
+    s.layers.forEach((L,i)=>{
+      const lg=mk('g',{class:'layer',style:`--i:${i}`},g);
+      topInfo=(s.shape==='drum'?drumLayer:boxLayer)(lg,s.u,s.v,i*HL,i,s);
+      if(i===nl-1){
+        const cx=iso(s.u,s.v,(i+1)*HL);
+        if(s.shape==='out'){ /* flecha de salida sobre la cara superior */
+          mk('polygon',{points:`${cx[0]-22},${cx[1]-2} ${cx[0]+2},${cx[1]-14} ${cx[0]+2},${cx[1]-8} ${cx[0]+24},${cx[1]-8} ${cx[0]+24},${cx[1]+4} ${cx[0]+2},${cx[1]+4} ${cx[0]+2},${cx[1]+10}`,fill:'#FF6B47',stroke:'#E85A37',opacity:.95},lg);
+        }else{
+          const t=mk('text',{x:cx[0],y:cx[1]+4,'text-anchor':'middle','font-family':'Space Mono, monospace','font-size':mode==='planta'?12:16,'font-weight':700,fill:'#333333','pointer-events':'none'},lg);
+          t.textContent=s.code;
+        }
+      }
+    });
+    /* etiquetas de capa (visibles al desarmar) */
+    const tg=mk('g',{class:'tg','data-id':s.id},tags);
+    s.layers.forEach((L,i)=>{
+      const mid=iso(s.u,s.v,i*HL+HL/2);
+      const x=mid[0]+F*W+12,y=mid[1]-i*22+3;
+      const fs=mode==='planta'?10:13,w=L.n.length*fs*.62+12;
+      mk('line',{x1:mid[0]+F*W*.55,y1:y-3,x2:x-4,y2:y-3,stroke:'#64829E','stroke-width':.7},tg);
+      mk('rect',{x:x-3,y:y-fs-1,width:w,height:fs+7,fill:'#FFFFFF',stroke:'#D6CEC2','stroke-width':.7},tg);
+      const tx=mk('text',{x:x+2,y:y,'font-family':'Space Mono, monospace','font-size':fs,fill:'#333333'},tg);
+      tx.textContent=L.n;
+    });
+    nodes[s.id]={g,tg,lt:null,s};
+    g.addEventListener('mouseenter',()=>setHover(s.id));
+    g.addEventListener('mouseleave',()=>setHover(null));
+    g.addEventListener('focus',()=>setHover(s.id));
+    g.addEventListener('blur',()=>setHover(null));
+    g.addEventListener('click',()=>{pinId=(pinId===s.id?null:s.id);refresh()});
+    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pinId=(pinId===s.id?null:s.id);refresh()}});
+  }
+
+  /* etiquetas fijas sobre todo (con fondo para legibilidad) */
+  const lg2=mk('g',{style:'pointer-events:none'},svg);
+  for(const s of ST){
+    const lb=iso(s.u,s.v,0),fs=mode==='planta'?10:13,w=s.name.length*fs*.66+12,y=lb[1]+F*W/2+(mode==='planta'?16:19);
+    const gg=mk('g',{},lg2);
+    mk('rect',{x:lb[0]-w/2,y:y-fs-2,width:w,height:fs+8,fill:'#FFFFFF','fill-opacity':.94,stroke:'#D6CEC2','stroke-width':.7},gg);
+    const lt=mk('text',{class:'lbl','data-id':s.id,x:lb[0],y:y+1,'text-anchor':'middle'},gg);lt.textContent=s.name;
+    scene_lt[s.id]=lt;
+  }
+
+  svg.appendChild(tags); // etiquetas de capa por encima de todo
+  /* cuadro de rotulación (plano de ingeniería) */
+  const tb=mk('g',{transform:`translate(${c.vb[0]-232},${c.vb[1]-62})`,'pointer-events':'none'},svg);
+  mk('rect',{width:218,height:50,fill:'none',stroke:'#CFC7BC'},tb);
+  mk('line',{x1:0,y1:22,x2:218,y2:22,stroke:'#CFC7BC'},tb);
+  mk('line',{x1:128,y1:22,x2:128,y2:50,stroke:'#CFC7BC'},tb);
+  [['TIQUETERA — PLANTA',8,15,11,'#333333'],['HOJA 1/1 · ISO 2:1',8,40,9,'#5E6A77'],['REV 2026-11-15',136,40,9,'#5E6A77']].forEach(([t,x,y,fs,f])=>{
+    const e=mk('text',{x,y,'font-family':'Space Mono, monospace','font-size':fs,fill:f,'letter-spacing':'.06em'},tb);e.textContent=t});
+
+  for(const id in nodes)nodes[id].lt=scene_lt[id];
+  scene={nodes,packets,P,segLen,total,path};
+  refresh();
+}
+
+/* =========================================================
+   ESTADO / INTERACCIÓN
+   ========================================================= */
+function activeId(){return hoverId||pinId}
+function setHover(id){hoverId=id;refresh()}
+function refresh(){
+  const a=activeId();
+  for(const id in scene.nodes){
+    const n=scene.nodes[id];
+    const open=(mode==='componentes')||id===a;
+    n.g.classList.toggle('open',open);
+    n.g.classList.toggle('sel',id===a||id===pinId);
+    n.tg.classList.toggle('on',open);
+    n.lt.classList.toggle('on',id===a);
+  }
+  renderPanel(a);
+}
+
+/* panel lateral */
+const esc=t=>String(t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const mono=t=>esc(t).replace(/(\b[\w./-]+\.(?:js|jsx|json|md|prisma|yml|html|db)\b|\/api\/[\w/:?=.-]*|\b(?:PORT|NODE_ENV|DATABASE_URL|DB_PATH|VITE_API_URL|SUPER_ADMIN|PENDIENTE|ACTIVA|FINALIZADA|CONSUMO|REVERSA)\b)/g,'<code>$1</code>');
+let panelKey='',selLayer=-1;
+function renderPanel(id){
+  const key=id+'|'+selLayer+'|'+mode;
+  if(key===panelKey)return;panelKey=key;
+  if(!id){
+    panel.innerHTML=`
+      <div class="code">Plano general</div>
+      <h2>La fábrica Tiquetera</h2>
+      <p class="sum">Sistema web monorepo (React 19 + Vite en <code>frontend</code>, Node + Express 5 en <code>backend</code>) para restaurantes que venden almuerzos prepagados. El restaurante crea tiqueteras con código; el cliente las activa sin cuenta y obtiene un QR y un PIN de 6 dígitos; el restaurante descuenta almuerzos validando el PIN sobre una rejilla de cuadros.</p>
+      <h3>Cómo leer el plano</h3>
+      <ul>
+        <li>Cada bloque es un módulo de <code>ARQUITECTURA.md</code>; las piezas apiladas son sus componentes internos (route → controller → service → entity).</li>
+        <li>Los cubos son peticiones y datos viajando por la cinta. Una estación se aclara cuando un paquete pasa por ella.</li>
+        <li>Fila A: entrada y enrutado. Fila B (de derecha a izquierda): módulos de negocio y datos. Fila C: salidas, frontend, pruebas y despliegue.</li>
+      </ul>
+      <h3>Persistencia real</h3>
+      <ul><li>SQLite nativo <code>node:sqlite</code> en <code>backend/data/tiquetera.db</code>. Prisma/MongoDB está presente pero no se usa en el negocio.</li></ul>
+      <h3>Índice de estaciones</h3>
+      <div class="idx">${ST.map(s=>`<button data-go="${s.id}"><span>${s.code}</span>${esc(s.name)}</button>`).join('')}</div>
+      <p class="pin">Pasa el cursor sobre una estación o elige una del índice.</p>`;
+    panel.querySelectorAll('[data-go]').forEach(b=>{
+      b.onclick=()=>{pinId=b.dataset.go;selLayer=-1;refresh()};
+      b.onmouseenter=()=>setHover(b.dataset.go);b.onmouseleave=()=>setHover(null);
+    });
+    return;
+  }
+  const s=BY[id],idx=FLOW.indexOf(id),prev=FLOW[idx-1],next=FLOW[idx+1];
+  const li=a=>a.map(t=>`<li>${mono(t)}</li>`).join('');
+  panel.innerHTML=`
+    <div class="code">Estación ${s.code}<span class="tag">${esc(s.kind)}</span>${pinId===id?'<span class="tag">FIJADA</span>':''}</div>
+    <h2>${esc(s.name)}</h2>
+    <p class="sum">${esc(s.sum)}</p>
+    <h3>Archivos reales</h3><ul>${s.files.map(f=>`<li><span class="f">${esc(f)}</span></li>`).join('')}</ul>
+    <h3>Entrada · qué recibe</h3><ul>${li(s.recibe)}</ul>
+    <h3>Lógica interna · qué transforma</h3><ul>${li(s.trans)}</ul>
+    <h3>Salida · qué entrega</h3><ul>${li(s.entrega)}</ul>
+    <h3>Piezas internas (${s.layers.length})</h3>
+    <ul class="layers">${s.layers.map((L,i)=>`<li data-l="${i}" data-i="${String(i+1).padStart(2,'0')}" class="${i===selLayer?'on':''}"><b>${esc(L.n)}</b><br>${esc(L.d)}</li>`).join('')}</ul>
+    ${s.alerts.length?`<h3>Observaciones</h3>${s.alerts.map(a=>`<div class="alert">${mono(a)}</div>`).join('')}`:''}
+    <h3>Posición en la línea</h3>
+    <div class="nav">
+      ${prev?`<button data-go="${prev}">← ${esc(BY[prev].name)}</button>`:''}
+      ${next?`<button data-go="${next}">${esc(BY[next].name)} →</button>`:''}
+    </div>
+    <p class="pin">${pinId===id?'Clic de nuevo o ESC para soltar.':'Clic para fijar esta estación.'}</p>`;
+  panel.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{pinId=b.dataset.go;selLayer=-1;refresh()});
+  panel.querySelectorAll('[data-l]').forEach(e=>e.onclick=()=>{selLayer=selLayer==+e.dataset.l?-1:+e.dataset.l;highlightLayer(id);panelKey='';renderPanel(id)});
+  highlightLayer(id);
+}
+function highlightLayer(id){
+  const n=scene.nodes[id];if(!n)return;
+  n.g.querySelectorAll('.layer').forEach((l,i)=>{l.style.opacity=(selLayer<0||selLayer===i)?1:.35});
+}
+panel.addEventListener('mouseenter',()=>{});
+
+/* =========================================================
+   ANIMACIÓN DEL FLUJO
+   ========================================================= */
+let last=performance.now(),busySet='';
+function pointAt(s){
+  const {P,segLen}=scene;let i=1;
+  while(i<segLen.length-1&&segLen[i]<s)i++;
+  const t=(s-segLen[i-1])/(segLen[i]-segLen[i-1]||1);
+  return [P[i-1][0]+(P[i][0]-P[i-1][0])*t,P[i-1][1]+(P[i][1]-P[i-1][1])*t];
+}
+function tick(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(scene){
+    if(running){for(const p of scene.packets){p.s=(p.s+dt*70*speed*(mode==='planta'?1:1.5))%scene.total}}
+    const busy=new Set();
+    for(const p of scene.packets){
+      const [x,y]=pointAt(p.s);
+      const fade=Math.min(1,p.s/40,(scene.total-p.s)/40);
+      p.g.setAttribute('transform',`translate(${x},${y-5})`);p.g.setAttribute('opacity',Math.max(0,fade));
+      scene.segLen.forEach((d,i)=>{if(Math.abs(p.s-d)<26)busy.add(scene.path[i].id)});
+    }
+    const key=[...busy].sort().join();
+    if(key!==busySet){busySet=key;for(const id in scene.nodes)scene.nodes[id].g.classList.toggle('busy',busy.has(id))}
+  }
+  requestAnimationFrame(tick);
+}
+
+/* =========================================================
+   CONTROLES
+   ========================================================= */
+const bp=document.getElementById('pause');
+function syncPause(){bp.textContent=running?'❚❚ PAUSAR FLUJO':'▶ REANUDAR FLUJO';bp.setAttribute('aria-pressed',String(!running));svg.classList.toggle('paused',!running)}
+bp.onclick=()=>{running=!running;syncPause()};
+document.getElementById('speed').oninput=e=>speed=+e.target.value;
+function setMode(m){
+  if(m===mode)return;mode=m;
+  document.getElementById('v-planta').setAttribute('aria-pressed',String(m==='planta'));
+  document.getElementById('v-comp').setAttribute('aria-pressed',String(m==='componentes'));
+  stage.classList.add('swap');stage.classList.toggle('comp',m==='componentes');stage.scrollTo(0,0);
+  setTimeout(()=>{panelKey='';build();stage.classList.remove('swap')},170);
+}
+document.getElementById('v-planta').onclick=()=>setMode('planta');
+document.getElementById('v-comp').onclick=()=>setMode('componentes');
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){pinId=null;selLayer=-1;refresh()}
+  else if((e.key==='p'||e.key==='P')&&!e.target.matches('input')){running=!running;syncPause()}
+});
+
+build();syncPause();requestAnimationFrame(tick);
+</script>
+</body>
+</html>
