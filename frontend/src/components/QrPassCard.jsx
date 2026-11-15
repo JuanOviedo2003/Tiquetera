@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { QrCode, Download, Copy, Check, ExternalLink, Share2 } from 'lucide-react';
+import { QrCode, Download, Copy, Check, ExternalLink, Share2, MessageCircle } from 'lucide-react';
 import { buildClienteUrl, copyToClipboard, renderQrToCanvas } from '../utils/qr';
+import { buildQrShareMessage, buildWhatsAppUrl } from '../utils/whatsapp';
 
 /**
  * HU-C4: Tarjeta de Código QR fiel al Sistema de Diseño Integral.
@@ -86,6 +87,12 @@ export default function QrPassCard({
         message: 'No fue posible copiar el token.',
       });
     }
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = buildQrShareMessage({ clienteNombre, urlConsulta });
+    // Sin destinatario: la persona elige el chat (puede enviárselo a sí misma)
+    window.open(buildWhatsAppUrl('', text), '_blank');
   };
 
   const handleShareQr = async () => {
@@ -205,6 +212,15 @@ export default function QrPassCard({
         >
           {copiedToken ? <Check className="w-4 h-4 shrink-0" /> : <Copy className="w-4 h-4 shrink-0" />}
           <span className="truncate">{copiedToken ? 'Token Copiado' : 'Copiar Token'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleShareWhatsApp}
+          className="col-span-2 inline-flex items-center justify-center gap-2 py-2.5 px-3.5 rounded-xl text-xs font-semibold bg-[#FF6B47] hover:bg-[#E85A37] text-white shadow-sm shadow-[#FF6B47]/20 transition-all cursor-pointer touch-press"
+        >
+          <MessageCircle className="w-4 h-4 shrink-0" />
+          <span className="truncate">Enviarme el enlace por WhatsApp</span>
         </button>
       </div>
     </div>

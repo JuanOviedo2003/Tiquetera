@@ -62,6 +62,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     restauranteId: user?.restaurante_id || 'REST-1',
+    restauranteNombre: user?.restaurante_nombre || '',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

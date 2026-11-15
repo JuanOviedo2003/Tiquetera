@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
 import { buildActivacionUrl, copyToClipboard } from '../utils/qr';
+import { buildActivacionMessage, buildWhatsAppUrl } from '../utils/whatsapp';
 import {
   Ticket,
   Copy,
@@ -26,7 +27,7 @@ export default function TiqueterasView({
   onShowToast,
   onAbrirConsumo,
 }) {
-  const { restauranteId } = useAuth();
+  const { restauranteId, restauranteNombre } = useAuth();
   const [tiqueteras, setTiqueteras] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -202,13 +203,63 @@ export default function TiqueterasView({
 
   const handleShareWhatsApp = () => {
     if (!codeModalData) return;
-    const urlActivar = buildActivacionUrl(codeModalData.codigo);
-    const text = `¡Hola ${codeModalData.clienteNombre}! 🍽️\nTu tiquetera de ${codeModalData.totalAlmuerzos} almuerzos ha sido generada en nuestro restaurante.\n\n🔑 Tu código de activación es: *${codeModalData.codigo}*\n\nIngresa al portal para activarla y obtener tu QR de consumo:\n${urlActivar}\n\n⚠️ Este código vence en 48 horas. ¡Buen provecho!`;
-    const cleanPhone = (codeModalData.clienteTelefono || '').replace(/\D/g, '');
-    const waUrl = cleanPhone
-      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
-      : `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(waUrl, '_blank');
+    const text = buildActivacionMessage({
+      clienteNombre: codeModalData.clienteNombre,
+      restauranteNombre,
+      totalAlmuerzos: codeModalData.totalAlmuerzos,
+      codigo: codeModalData.codigo,
+      urlActivar: buildActivacionUrl(codeModalData.codigo),
+    });
+    window.open(buildWhatsAppUrl(codeModalData.clienteTelefono, text), '_blank');
+  };
+
+  /**
+   * Reenvío en un clic desde la lista: si el código venció lo reemite y abre WhatsApp.
+   * La pestaña se abre antes de las llamadas async para que el navegador no la bloquee.
+   */
+  const handleReenviarWhatsApp = async (tiquetera) => {
+    const win = window.open('about:blank', '_blank');
+    try {
+      let info = await api.getCodigoActivacion(tiquetera.id);
+      const vencido =
+        info.fecha_expiracion_codigo && new Date(info.fecha_expiracion_codigo) < new Date();
+
+      if (vencido) {
+        const res = await api.reemitirCodigoActivacion(tiquetera.id);
+        info = {
+          codigo_activacion: res.tiquetera.codigo_activacion,
+          fecha_expiracion_codigo: res.tiquetera.fecha_expiracion_codigo,
+        };
+        fetchData();
+        onShowToast({
+          type: 'success',
+          title: 'Código reemitido',
+          message: 'El código anterior había vencido; se generó uno nuevo de 48 horas.',
+        });
+      }
+
+      const clienteObj = clientes.find((c) => String(c.id) === String(tiquetera.cliente_id));
+      const text = buildActivacionMessage({
+        clienteNombre: tiquetera.cliente_nombre || clienteObj?.nombre || 'Cliente',
+        restauranteNombre,
+        totalAlmuerzos: tiquetera.total_almuerzos,
+        codigo: info.codigo_activacion,
+        urlActivar: buildActivacionUrl(info.codigo_activacion),
+      });
+      const waUrl = buildWhatsAppUrl(clienteObj?.telefono, text);
+      if (win) {
+        win.location.href = waUrl;
+      } else {
+        window.open(waUrl, '_blank');
+      }
+    } catch (err) {
+      if (win) win.close();
+      onShowToast({
+        type: 'error',
+        title: 'No se pudo reenviar',
+        message: err.message || 'No fue posible preparar el mensaje de WhatsApp',
+      });
+    }
   };
 
   const handleReemitirCodigo = async () => {
@@ -512,6 +563,17 @@ export default function TiqueterasView({
                         >
                           <Share2 className="w-3.5 h-3.5 shrink-0" />
                           <span className="truncate">Entregar Código</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleReenviarWhatsApp(tiq)}
+                          className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold bg-[#64829E] hover:bg-[#526E88] text-white shadow-sm transition-all cursor-pointer shrink-0 touch-press"
+                          title="Reenviar el código por WhatsApp (reemite si venció)"
+                          aria-label="Reenviar el código por WhatsApp"
+                        >
+                          <MessageCircle className="w-4 h-4 shrink-0" />
+                          <span className="hidden sm:inline">WhatsApp</span>
                         </button>
 
                         <button
