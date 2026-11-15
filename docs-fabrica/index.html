@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tiquetera — Documentación de arquitectura</title>
+<meta name="description" content="Portal de documentación técnica de la arquitectura de Tiquetera: entradas, módulos, almacenes y salidas." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F9F5F1; --card:#FFFFFF; --ink:#333333; --ink2:#444B52; --mut:#5E6A77; --line:#E5DED4; --line2:#D6CEC2;
+  --pri:#FF6B47; --pri2:#E85A37; --slate:#64829E; --slate2:#526E88; --tint:#F3ECE4;
+  --code-bg:#2B2B2B; --code-ink:#F9F5F1; --code-mut:#9AA7B5;
+  --side:264px; --mono:'Space Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:var(--bg);color:var(--ink2);font:15px/1.7 'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--slate2);text-decoration-color:#D6CEC2;text-underline-offset:3px}
+a:hover{color:var(--pri2);text-decoration-color:var(--pri)}
+code,kbd{font:400 .84em var(--mono);background:var(--tint);border:1px solid var(--line);border-radius:4px;padding:.08em .38em;color:var(--ink);word-break:break-word}
+
+/* ---------- barra lateral ---------- */
+#side{position:fixed;inset:0 auto 0 0;width:var(--side);background:var(--card);border-right:1px solid var(--line);overflow-y:auto;padding:22px 14px 40px;z-index:30}
+.brand{display:block;text-decoration:none;padding:0 10px 16px}
+.brand strong{display:block;font:600 17px 'Poppins',sans-serif;color:var(--ink);letter-spacing:-.01em}
+.brand span{font:400 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+#side h4{font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:20px 10px 6px}
+#side a.nav,#side a.brand{text-decoration:none}
+#side a.nav{display:block;padding:5px 10px;border-radius:6px;color:var(--ink2);text-decoration:none;font-size:13.5px;line-height:1.4}
+#side a.nav:hover{background:var(--tint);color:var(--ink)}
+#side a.nav.on{background:var(--pri);color:#fff}
+#side a.nav i{font:700 10.5px var(--mono);font-style:normal;color:var(--mut);margin-right:8px;display:inline-block;min-width:18px}
+#side a.nav.on i{color:rgba(255,255,255,.85)}
+#side a.sub{padding-left:18px}
+.menu{display:none;position:fixed;top:10px;left:10px;z-index:40;border:1px solid var(--pri);color:var(--pri2);background:#fff;border-radius:8px;padding:8px 12px;font:600 12px var(--mono);cursor:pointer}
+
+/* ---------- contenido ---------- */
+main{margin-left:var(--side);min-width:0}
+.hero{padding:24px 48px 16px;max-width:1240px}
+.hero .eyebrow{font:700 10.5px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.hero h1{font:600 34px/1.15 'Poppins',sans-serif;color:var(--ink);margin:8px 0 10px;letter-spacing:-.02em}
+.hero p{max-width:760px;margin:0;color:var(--ink2);font-size:16px}
+.hero .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.pill{font:400 11px var(--mono);border:1px solid var(--line2);background:#fff;border-radius:99px;padding:3px 11px;color:var(--ink2)}
+.pill b{color:var(--ink)}
+.machine{margin:8px 24px 0 24px;border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:#F9F5F1;box-shadow:0 18px 40px -26px rgba(100,130,158,.55)}
+.machine .bar{display:flex;align-items:center;gap:12px;padding:8px 14px;background:#fff;border-bottom:1px solid var(--line);font:400 11px var(--mono);color:var(--mut)}
+.machine .bar a{color:var(--ink);text-decoration:none;margin-left:auto;border:1px solid var(--line2);border-radius:5px;padding:2px 9px}
+.machine .bar a:hover{background:var(--pri);border-color:var(--pri);color:#fff}
+.machine .dots{display:flex;gap:5px}.machine .dots i{width:9px;height:9px;border-radius:50%;background:var(--line2)}.machine .dots i:first-child{background:var(--pri)}
+.machine iframe{display:block;width:100%;height:min(84vh,860px);min-height:560px;border:0;background:#F9F5F1}
+.docs{padding:8px 48px 90px;max-width:1240px}
+section{padding-top:44px;border-top:1px solid var(--line);margin-top:52px}
+section:first-of-type{border-top:0;margin-top:30px}
+h2{font:600 28px/1.2 'Poppins',sans-serif;color:var(--ink);margin:0 0 6px;letter-spacing:-.015em}
+h2 .n{font:700 12px var(--mono);color:var(--pri);letter-spacing:.14em;display:block;margin-bottom:6px;text-transform:uppercase}
+h3{font:600 20px 'Poppins',sans-serif;color:var(--ink);margin:0 0 4px}
+h4{font:700 10.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:26px 0 8px}
+p{margin:.55em 0 1em;max-width:820px}
+.lead{font-size:16.5px;color:var(--ink);max-width:820px}
+ul,ol{max-width:860px;padding-left:22px;margin:.4em 0 1em}
+li{margin:.3em 0}
+.station{padding-top:34px;margin-top:34px;border-top:1px dashed var(--line2)}
+.station:first-of-type{border-top:0;margin-top:10px;padding-top:6px}
+.station header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.badge{font:700 12px var(--mono);background:var(--pri);color:#fff;border-radius:6px;padding:2px 9px}
+.kicker{font:400 12px var(--mono);color:var(--mut)}
+.io{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0 6px}
+.io div{border:1px solid var(--line);background:#fff;border-radius:10px;padding:12px 14px}
+.io b{display:block;font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:5px}
+.io span{font-size:13.5px;line-height:1.5;display:block}
+.steps{counter-reset:s;list-style:none;padding:0;margin:6px 0 14px}
+.steps li{counter-increment:s;position:relative;padding:2px 0 2px 38px;margin:.55em 0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:25px;height:25px;border-radius:50%;border:1px solid var(--line2);background:#fff;font:700 11px/23px var(--mono);text-align:center;color:var(--ink)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin:10px 0 18px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mut);text-align:left;background:var(--tint);border-bottom:1px solid var(--line);padding:9px 12px;white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid #F0E9E0;vertical-align:top}
+tr:last-child td{border-bottom:0}
+td:first-child{white-space:nowrap}
+.verb{font:700 11px var(--mono);letter-spacing:.04em;white-space:nowrap}
+.callout{border:1px solid var(--line2);border-left:3px solid var(--pri);background:#fff;border-radius:0 8px 8px 0;padding:10px 14px;margin:14px 0;max-width:860px;font-size:14px}
+.callout b{color:var(--ink)}
+.callout.warn{background:#FFF4F0}
+/* bloques de código */
+figure.code{margin:12px 0 18px;border-radius:10px;overflow:hidden;background:var(--code-bg);border:1px solid #3a3a3a;max-width:980px}
+figure.code figcaption{display:flex;gap:10px;align-items:center;padding:7px 12px;background:#333333;border-bottom:1px solid #444;font:400 11px var(--mono);color:#B9C4CF;flex-wrap:wrap}
+figure.code figcaption span{color:#F9F5F1;word-break:break-all}
+figure.code figcaption em{font-style:normal;color:#8E9AA7}
+figure.code figcaption b{font-weight:400;color:#FFB4A1;border:1px solid #555;border-radius:4px;padding:0 6px}
+figure.code .copy{margin-left:auto;background:transparent;color:#E5DED4;border:1px solid #555;border-radius:5px;font:400 11px var(--mono);padding:2px 9px;cursor:pointer}
+figure.code .copy:hover{background:var(--pri);border-color:var(--pri);color:#fff}
+pre{margin:0;padding:14px 16px;overflow:auto;font:400 12.5px/1.65 var(--mono);color:var(--code-ink);tab-size:2}
+pre code{background:none;border:0;padding:0;color:inherit;font:inherit;word-break:normal}
+.t-c{color:var(--code-mut);font-style:italic}.t-s{color:#FFC2B0}.t-k{color:#FF8F73;font-weight:700}.t-n{color:#9DB4CA}
+pre.plain{background:var(--code-bg);color:var(--code-ink);border-radius:10px;border:1px solid #3a3a3a;max-width:980px;margin:12px 0 18px}
+.foot{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);font:400 11.5px var(--mono);color:var(--mut)}
+.toc2{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:14px 0}
+.toc2 a{border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 14px;text-decoration:none;display:block}
+.toc2 a:hover{border-color:var(--pri)}
+.toc2 a b{display:block;color:var(--ink);font:600 14px 'Poppins',sans-serif}
+.toc2 a span{font-size:12.5px;color:var(--mut)}
+@media (max-width:1000px){
+  #side{transform:translateX(-100%);transition:transform .2s}
+  body.open #side{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}
+  .menu{display:block}
+  main{margin-left:0}
+  .hero{padding:58px 20px 18px}.docs{padding:8px 20px 70px}.machine{margin:8px 10px 0}
+  .io{grid-template-columns:1fr}
+  .hero h1{font-size:30px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<button class="menu" id="menuBtn" aria-label="Abrir menú">☰ Menú</button>
+
+<nav id="side" aria-label="Navegación de la documentación">
+  <a class="brand" href="#top"><strong>Tiquetera</strong><span>Docs · Arquitectura</span></a>
+  <h4>Introducción</h4>
+  <a class="nav" href="#maquina"><i>▶</i>La fábrica interactiva</a>
+  <a class="nav" href="#resumen"><i>1</i>Resumen ejecutivo</a>
+  <a class="nav" href="#entradas"><i>2</i>Materia prima (entradas)</a>
+  <h4>3 · Estaciones de ensamblaje</h4>
+  <a class="nav" href="#estaciones"><i>·</i>Visión general</a>
+  <a class="nav sub" href="#est-1"><i>1</i>Bootstrap / servidor</a>
+  <a class="nav sub" href="#est-2"><i>2</i>Configuración de datos</a>
+  <a class="nav sub" href="#est-3"><i>3</i>Login</a>
+  <a class="nav sub" href="#est-4"><i>4</i>Usuarios y restaurantes</a>
+  <a class="nav sub" href="#est-5"><i>5</i>Clientes</a>
+  <a class="nav sub" href="#est-6"><i>6</i>Tiqueteras</a>
+  <a class="nav sub" href="#est-7"><i>7</i>Consumos</a>
+  <a class="nav sub" href="#est-8"><i>8</i>Rejilla</a>
+  <a class="nav sub" href="#est-9"><i>9</i>Frontend SPA</a>
+  <a class="nav sub" href="#est-10"><i>10</i>Pruebas</a>
+  <a class="nav sub" href="#est-11"><i>11</i>Despliegue</a>
+  <h4>Datos y resultados</h4>
+  <a class="nav" href="#almacenes"><i>4</i>Almacenes</a>
+  <a class="nav" href="#salidas"><i>5</i>Producto terminado (salidas)</a>
+  <h4>Anexo</h4>
+  <a class="nav" href="#hallazgos"><i>!</i>Hallazgos observados</a>
+</nav>
+
+<main id="top">
+  <div class="hero">
+    <div class="eyebrow">Documentación técnica · Rev. 2026-11-15</div>
+    <h1>Arquitectura de Tiquetera</h1>
+    <p>Sistema web para restaurantes que venden almuerzos prepagados. Interactúa con la fábrica de abajo: cada estación es un módulo real del repositorio. Más abajo está el detalle de cada una, con código extraído del propio proyecto.</p>
+    <div class="meta">
+      <span class="pill"><b>Backend</b> Node.js · Express 5</span>
+      <span class="pill"><b>Frontend</b> React 19 · Vite 8 · Tailwind 4</span>
+      <span class="pill"><b>Datos</b> SQLite (<code>node:sqlite</code>)</span>
+      <span class="pill"><b>Infra</b> Docker · GitHub Actions</span>
+    </div>
+  </div>
+
+  <div class="machine" id="maquina">
+    <div class="bar"><span class="dots"><i></i><i></i><i></i></span>fabrica-sistema.html · pasa el cursor sobre una estación, haz clic para fijarla<a href="fabrica-sistema.html" target="_blank" rel="noopener">Abrir en pestaña nueva ↗</a></div>
+    <iframe src="fabrica-sistema.html" title="Fábrica interactiva del sistema Tiquetera" loading="eager"></iframe>
+  </div>
+
+  <div class="docs">
+
+  <!-- ===================== 1 ===================== -->
+  <section id="resumen">
+    <h2><span class="n">Sección 1</span>Resumen ejecutivo</h2>
+    <p class="lead">Tiquetera es una aplicación web monorepo (npm workspaces: <code>frontend</code> y <code>backend</code>) para restaurantes que venden almuerzos prepagados, llamados "tiqueteras".</p>
+    <ol class="steps">
+      <li><b>El restaurante</b> registra un cliente y crea una tiquetera de N almuerzos. Nace en estado <code>PENDIENTE</code> con un código de activación de 6 dígitos que vence en 48 horas.</li>
+      <li><b>El cliente</b> (sin cuenta) activa la tiquetera en <code>/activar</code>: recibe un QR (UUID) y define un PIN de 6 dígitos.</li>
+      <li><b>El restaurante</b> abre la tiquetera por QR, valida el PIN y descuenta almuerzos marcando cuadros en una rejilla. Cada operación queda como un movimiento inmutable.</li>
+      <li><b>Un <code>SUPER_ADMIN</code></b> administra restaurantes, estados y PINes. La persistencia efectiva es SQLite; Prisma/MongoDB solo se conecta y siembra usuarios.</li>
+    </ol>
+    <div class="toc2">
+      <a href="#entradas"><b>Entradas</b><span>HTTP, URLs, cámara, entorno</span></a>
+      <a href="#estaciones"><b>11 estaciones</b><span>Módulos del backend, SPA, pruebas, despliegue</span></a>
+      <a href="#almacenes"><b>Almacenes</b><span>SQLite, Prisma/Mongo, memoria</span></a>
+      <a href="#salidas"><b>Salidas</b><span>JSON, QR, SPA, /health</span></a>
+    </div>
+    <h4>Comandos del monorepo</h4>
+    <figure class="code"><figcaption><span>package.json</span><em>líneas 9–19</em><b>scripts raíz</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="json">"scripts": {
+  "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+  "dev:backend": "npm run dev -w backend",
+  "dev:frontend": "npm run dev -w frontend",
+  "build": "npm run build -w frontend",
+  "build:frontend": "npm run build -w frontend",
+  "start": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run start -w backend\" \"npm run preview -w frontend\"",
+  "test": "npm run test -w backend",
+  "prisma:generate": "npm run prisma:generate -w backend",
+  "prisma:push": "npm run prisma:push -w backend"
+},</code></pre></figure>
+  </section>
+
+  <!-- ===================== 2 ===================== -->
+  <section id="entradas">
+    <h2><span class="n">Sección 2</span>Materia prima (entradas)</h2>
+    <p class="lead">Todo lo que entra al sistema lo hace por cuatro puertas: peticiones HTTP JSON, URLs públicas del navegador, entradas del dispositivo (cámara, <code>localStorage</code>) y configuración/eventos de infraestructura.</p>
+
+    <h4>2.1 Peticiones HTTP al backend</h4>
+    <p>El servidor usa <code>cors()</code> y <code>express.json()</code> (<code>backend/app.js:17-18</code>). Todas las rutas cuelgan de <code>/api</code> y ninguna pasa por un middleware de autenticación.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Ruta</th><th>Método</th><th>Entrada</th></tr></thead>
+      <tbody>
+      <tr><td><code>/api/login</code></td><td class="verb">POST</td><td><code>{email, password}</code></td></tr>
+      <tr><td><code>/api/users</code></td><td class="verb">GET · POST</td><td><code>?restaurante_id</code> · <code>{name, email, password, restaurante_id}</code></td></tr>
+      <tr><td><code>/api/users/restaurantes</code></td><td class="verb">GET · POST</td><td><code>{name, email, password, precio_tiquetera}</code></td></tr>
+      <tr><td><code>/api/users/restaurantes/:id</code></td><td class="verb">PUT · DELETE</td><td><code>{name, email, password, active, precio_tiquetera}</code></td></tr>
+      <tr><td><code>/api/clientes</code></td><td class="verb">GET · POST</td><td><code>?restaurante_id</code> · <code>{nombre, identificacion, telefono, restaurante_id}</code></td></tr>
+      <tr><td><code>/api/clientes/:id</code> · <code>/search/:id</code></td><td class="verb">GET</td><td>id en la ruta</td></tr>
+      <tr><td><code>/api/tiqueteras</code></td><td class="verb">POST · GET</td><td><code>{cliente_id, total_almuerzos, restaurante_id}</code> · filtros <code>cliente_id, cliente_nombre, estado, fecha_creacion, restaurante_id</code></td></tr>
+      <tr><td><code>/api/tiqueteras/activar</code></td><td class="verb">POST</td><td><code>{codigo_activacion, pin}</code> (público)</td></tr>
+      <tr><td><code>/api/tiqueteras/validar-pin</code> · <code>/:id/validar-pin</code></td><td class="verb">POST</td><td><code>{qr_token | id, pin}</code></td></tr>
+      <tr><td><code>/api/tiqueteras/regenerar-pin</code></td><td class="verb">POST</td><td><code>{qr_token, pin_anterior, nuevo_pin}</code> (público)</td></tr>
+      <tr><td><code>/api/tiqueteras/:id/reemitir-codigo</code></td><td class="verb">POST</td><td>id</td></tr>
+      <tr><td><code>/api/tiqueteras/:id/codigo-activacion</code></td><td class="verb">GET</td><td>id</td></tr>
+      <tr><td><code>/api/tiqueteras/qr/:qrToken</code> · <code>/public/qr/:qrToken</code></td><td class="verb">GET</td><td>token QR</td></tr>
+      <tr><td><code>/api/tiqueteras/admin/pines</code></td><td class="verb">GET</td><td><code>?restaurante_id&amp;tiquetera_id</code></td></tr>
+      <tr><td><code>/api/tiqueteras/:id/admin-pin</code></td><td class="verb">PUT</td><td><code>{nuevo_pin}</code></td></tr>
+      <tr><td><code>/api/tiqueteras/:id/estado</code></td><td class="verb">PUT</td><td><code>{estado}</code> — PENDIENTE, ACTIVA o FINALIZADA</td></tr>
+      <tr><td><code>/api/tiqueteras/:id</code></td><td class="verb">GET · DELETE</td><td>id; <code>?admin=true</code> o <code>?force=true</code> fuerza el borrado</td></tr>
+      <tr><td><code>/api/consumos</code></td><td class="verb">POST</td><td><code>{tiquetera_id, pin, cantidad, usuario_id, cuadros_seleccionados[]}</code></td></tr>
+      <tr><td><code>/api/consumos/reversa</code></td><td class="verb">POST</td><td><code>{consumo_id, usuario_id, cuadro_deseleccionado, motivo}</code></td></tr>
+      <tr><td><code>/api/consumos/tiquetera/:tiqueteraId</code></td><td class="verb">GET</td><td><code>?fecha=YYYY-MM-DD</code></td></tr>
+      <tr><td><code>/api/rejilla/:qrToken</code></td><td class="verb">GET</td><td>token QR</td></tr>
+      <tr><td><code>/health</code></td><td class="verb">GET</td><td>—</td></tr>
+      </tbody></table></div>
+
+    <h4>2.2 Entradas del navegador</h4>
+    <ul>
+      <li><b>URL pública</b> interpretada por <code>parseRouteFromUrl()</code>: <code>/tiquetera/&lt;token&gt;</code>, <code>/qr/&lt;token&gt;</code> o <code>?qr=</code> abren la vista del cliente; <code>/activar</code> o <code>?codigo=</code> abren la activación; cualquier otra ruta abre la consola del restaurante.</li>
+      <li><b>Formularios</b> de <code>frontend/src/views/</code>, que terminan en llamadas de <code>services/api.js</code>.</li>
+      <li><b>Cámara o imagen con QR</b>: <code>QrScanner.jsx</code> y <code>utils/qr.js</code> (<code>jsQR</code>, con <code>BarcodeDetector</code> de respaldo).</li>
+      <li><b><code>localStorage["tiquetera_auth_user"]</code></b>: la sesión se rehidrata desde <code>AuthContext.jsx</code>.</li>
+    </ul>
+    <figure class="code"><figcaption><span>frontend/src/App.jsx</span><em>líneas 18–40</em><b>parseRouteFromUrl()</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="jsx">function parseRouteFromUrl() {
+  if (typeof window === 'undefined') return { mode: 'restaurante' };
+  const path = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+
+  // Ruta pública de consulta del QR (HU-C3, HU-C4, HU-C5)
+  if (path.startsWith('/tiquetera/') || path.startsWith('/qr/') || params.get('qr')) {
+    const token = extractQrToken(params.get('qr') || path);
+    if (token) {
+      return { mode: 'cliente-tiquetera', qrToken: token };
+    }
+  }
+
+  // Ruta pública de activación de tiquetera (HU-C1, HU-C2)
+  if (path.startsWith('/activar') || params.has('codigo') || params.has('activar')) {
+    return {
+      mode: 'cliente-activar',
+      codigo: params.get('codigo') || '',
+    };
+  }
+
+  return { mode: 'restaurante' };
+}</code></pre></figure>
+
+    <h4>2.3 Entradas de infraestructura</h4>
+    <p>Variables de entorno <code>PORT</code>, <code>NODE_ENV</code>, <code>DATABASE_URL</code> (Mongo/Prisma), <code>DB_PATH</code> (archivo SQLite) y <code>VITE_API_URL</code> (frontend); y el evento <code>push</code> a <code>main</code> que dispara el despliegue (estación 11).</p>
+  </section>
+
+  <!-- ===================== 3 ===================== -->
+  <section id="estaciones">
+    <h2><span class="n">Sección 3</span>Estaciones de ensamblaje (módulos)</h2>
+    <p class="lead">Once componentes. En el backend, cada módulo de negocio vive en <code>backend/src/modules/&lt;modulo&gt;/</code> y sigue el patrón <b>route → controller → service → entity</b>; la entity ejecuta SQL directo con <code>db.prepare(...)</code>. Los módulos <code>login</code> y <code>rejilla</code> tienen los archivos en la raíz del módulo; los demás usan subcarpetas <code>routes/ controllers/ services/ entity/</code>.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Estación</th><th>Archivo principal</th><th>Entrega</th></tr></thead>
+      <tbody>
+      <tr><td>1</td><td><a href="#est-1">Bootstrap</a></td><td><code>backend/app.js</code></td><td>JSON, SPA estática</td></tr>
+      <tr><td>2</td><td><a href="#est-2">Configuración de datos</a></td><td><code>backend/src/config/database.js</code></td><td>objeto <code>db</code></td></tr>
+      <tr><td>3</td><td><a href="#est-3">Login</a></td><td><code>modules/login/login.service.js</code></td><td>usuario sin contraseña</td></tr>
+      <tr><td>4</td><td><a href="#est-4">Usuarios</a></td><td><code>modules/user/services/user.service.js</code></td><td>usuarios, restaurantes</td></tr>
+      <tr><td>5</td><td><a href="#est-5">Clientes</a></td><td><code>modules/cliente/services/cliente.service.js</code></td><td>clientes</td></tr>
+      <tr><td>6</td><td><a href="#est-6">Tiqueteras</a></td><td><code>modules/tiquetera/services/tiquetera.service.js</code></td><td>tiqueteras, QR, PIN</td></tr>
+      <tr><td>7</td><td><a href="#est-7">Consumos</a></td><td><code>modules/consumo/services/consumo.service.js</code></td><td>movimientos</td></tr>
+      <tr><td>8</td><td><a href="#est-8">Rejilla</a></td><td><code>modules/rejilla/rejilla.service.js</code></td><td>rejilla de cuadros</td></tr>
+      <tr><td>9</td><td><a href="#est-9">Frontend SPA</a></td><td><code>frontend/src/App.jsx</code></td><td>UI compilada</td></tr>
+      <tr><td>10</td><td><a href="#est-10">Pruebas</a></td><td><code>backend/tests/</code></td><td>resultado de <code>npm test</code></td></tr>
+      <tr><td>11</td><td><a href="#est-11">Despliegue</a></td><td><code>docker-compose.yml</code></td><td>app desplegada</td></tr>
+      </tbody></table></div>
+
+    <!-- ---- 1 ---- -->
+    <article class="station" id="est-1">
+      <header><span class="badge">01</span><h3>Bootstrap / servidor HTTP</h3><span class="kicker">backend/app.js</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span>Toda petición HTTP y la variable <code>PORT</code> (3000 por defecto).</span></div>
+        <div><b>Transforma</b><span>Monta middlewares y routers, sirve el SPA y decide los 404.</span></div>
+        <div><b>Entrega</b><span>JSON, archivos estáticos y <code>export {app, server}</code>.</span></div>
+      </div>
+      <h4>Paso a paso</h4>
+      <ol class="steps">
+        <li>Registra <code>cors()</code> y <code>express.json()</code> y monta los seis routers bajo <code>/api</code>, más <code>GET /health</code>.</li>
+        <li>Busca <code>frontend/dist</code> en cuatro rutas candidatas; si existe, lo sirve estático y devuelve <code>index.html</code> para cualquier GET fuera de <code>/api</code> (fallback del SPA).</li>
+        <li>Lo que no coincide termina en <code>404 {"error":"Ruta no encontrada"}</code>.</li>
+        <li>Si detecta entorno de test, <b>no abre el puerto</b>; si no, hace <code>listen()</code> y llama a <code>connectPrisma()</code>.</li>
+      </ol>
+      <figure class="code"><figcaption><span>backend/app.js</span><em>líneas 17–30</em><b>Middlewares y routers</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">app.use(cors());
+app.use(express.json());
+
+app.get("/health", (req, res) =&gt; {
+    res.json({ status: "ok" });
+});
+
+app.use("/api/users", userRouter);
+app.use("/api/clientes", clienteRouter);
+app.use("/api/tiqueteras", tiqueteraRouter);
+app.use("/api/consumos", consumoRouter);
+app.use("/api/login", loginRouter);
+app.use("/api/rejilla", rejillaRouter);</code></pre></figure>
+      <figure class="code"><figcaption><span>backend/app.js</span><em>líneas 32–51</em><b>Servicio del SPA compilado</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">const potentialDistPaths = [
+    path.resolve(process.cwd(), "frontend/dist"),
+    path.resolve(process.cwd(), "../frontend/dist"),
+    path.resolve(import.meta.dirname, "../frontend/dist"),
+    path.resolve(import.meta.dirname, "../../frontend/dist"),
+];
+const distPath = potentialDistPaths.find((p) =&gt; fs.existsSync(p));
+if (distPath) {
+    app.use(express.static(distPath));
+    app.use((req, res, next) =&gt; {
+        if (req.method === "GET" &amp;&amp; !req.path.startsWith("/api") &amp;&amp; req.path !== "/health") {
+            return res.sendFile(path.join(distPath, "index.html"));
+        }
+        next();
+    });
+}
+
+app.use((req, res) =&gt; {
+    res.status(404).json({ error: "Ruta no encontrada" });
+});</code></pre></figure>
+      <figure class="code"><figcaption><span>backend/app.js</span><em>líneas 53–56</em><b>Detección de entorno de test (si es test, no se abre el puerto)</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">const isTestEnvironment =
+    process.env.NODE_ENV === "test" ||
+    process.execArgv.includes("--test") ||
+    process.argv.some((arg) =&gt; arg.includes("test"));</code></pre></figure>
+    </article>
+
+    <!-- ---- 2 ---- -->
+    <article class="station" id="est-2">
+      <header><span class="badge">02</span><h3>Configuración de datos</h3><span class="kicker">backend/src/config/database.js · prisma.js</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span><code>DB_PATH</code>, <code>NODE_ENV</code> o argumentos de test, <code>DATABASE_URL</code>.</span></div>
+        <div><b>Transforma</b><span>Abre SQLite, crea el esquema, siembra usuarios y prepara Prisma.</span></div>
+        <div><b>Entrega</b><span>El objeto <code>db</code> que usan todas las entities.</span></div>
+      </div>
+      <h4>Paso a paso</h4>
+      <ol class="steps">
+        <li><code>database.js</code> elige la ruta: <code>:memory:</code> en test, <code>backend/data/tiquetera.db</code> en el resto, o lo que diga <code>DB_PATH</code>.</li>
+        <li>Abre <code>DatabaseSync</code> de <code>node:sqlite</code>, activa <code>WAL</code> y <code>foreign_keys</code>.</li>
+        <li><code>initSchema()</code> se ejecuta al importar el módulo: <code>CREATE TABLE IF NOT EXISTS</code> más <code>ALTER TABLE … ADD COLUMN</code> tolerantes a que la columna ya exista.</li>
+        <li><code>seedDefaultUsers()</code> inserta el superusuario y dos cuentas demo si la tabla está vacía.</li>
+        <li><code>prisma.js</code> crea el <code>PrismaClient</code>; solo conecta y siembra si hay <code>DATABASE_URL</code>.</li>
+      </ol>
+      <figure class="code"><figcaption><span>backend/src/config/database.js</span><em>líneas 5–29</em><b>Apertura de la base</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">const isTestEnvironment =
+  process.env.NODE_ENV === 'test' ||
+  process.execArgv.includes('--test') ||
+  process.argv.some((arg) =&gt; arg.includes('test'));
+
+const backendDir = path.resolve(import.meta.dirname, '../..');
+const dataDir = path.resolve(backendDir, 'data');
+
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const defaultDbPath = isTestEnvironment
+  ? ':memory:'
+  : path.resolve(dataDir, 'tiquetera.db');
+
+const dbPath = process.env.DB_PATH || defaultDbPath;
+
+export const db = new DatabaseSync(dbPath);
+
+// Enable WAL for concurrency and foreign keys
+if (dbPath !== ':memory:') {
+  db.exec('PRAGMA journal_mode = WAL;');
+}
+db.exec('PRAGMA foreign_keys = ON;');</code></pre></figure>
+      <figure class="code"><figcaption><span>backend/src/config/prisma.js</span><em>líneas 46–58</em><b>Conexión Prisma (sin uso en el negocio)</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">export async function connectPrisma() {
+  if (process.env.DATABASE_URL) {
+    try {
+      await prisma.$connect();
+      console.log('Conectado exitosamente a la base de datos con Prisma ORM');
+      await seedPrismaDefaults();
+    } catch (err) {
+      console.error('Error conectando Prisma ORM:', err.message);
+    }
+  }
+}
+
+export default prisma;</code></pre></figure>
+      <div class="callout warn"><b>Nota:</b> la semilla guarda contraseñas en texto plano en el campo <code>password</code> (<code>admin123</code>, <code>1234</code>, <code>cocina123</code>) y <code>schema.prisma</code> está desalineado con el esquema SQLite.</div>
+    </article>
+
+    <!-- ---- 3 ---- -->
+    <article class="station" id="est-3">
+      <header><span class="badge">03</span><h3>Login</h3><span class="kicker">backend/src/modules/login/</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span><code>POST /api/login</code> con <code>{email, password}</code>.</span></div>
+        <div><b>Transforma</b><span>Busca el usuario, compara la contraseña y verifica que esté activo.</span></div>
+        <div><b>Entrega</b><span><code>200 {mensaje, usuario}</code> sin token.</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Archivo</th><th>Rol</th></tr></thead>
+        <tbody>
+        <tr><td><code>login.route.js</code></td><td>Declara <code>POST /</code></td></tr>
+        <tr><td><code>login.controller.js</code></td><td>Extrae el body y mapea <code>statusCode</code> a HTTP</td></tr>
+        <tr><td><code>login.service.js</code></td><td>Validación, <code>bcrypt</code> y estado activo</td></tr>
+        <tr><td><code>login.entity.js</code></td><td><code>UserEntity.findByEmail</code> y lista <code>seedUsers</code> en memoria</td></tr>
+        </tbody></table></div>
+      <h4>Paso a paso</h4>
+      <ol class="steps">
+        <li>Normaliza el email (<code>trim</code> y minúsculas); responde 400 si falta email o contraseña.</li>
+        <li>Busca en la base y, si no hay resultado, en <code>seedUsers</code>.</li>
+        <li>Compara con <code>bcrypt.compareSync</code> contra <code>passwordHash</code>, o por igualdad directa contra el campo legado <code>password</code>.</li>
+        <li>Rechaza con 401 si no coincide y con 403 "Usuario inactivo" si la cuenta está desactivada.</li>
+        <li>Devuelve el usuario sin <code>password</code> ni <code>passwordHash</code>.</li>
+      </ol>
+      <figure class="code"><figcaption><span>backend/src/modules/login/login.service.js</span><em>líneas 26–52</em><b>Verificación de credenciales</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">  let passwordMatches = false;
+  if (user.passwordHash) {
+    try {
+      passwordMatches = bcrypt.compareSync(password, user.passwordHash);
+    } catch {
+      passwordMatches = false;
+    }
+  } else if (user.password) {
+    passwordMatches = user.password === password;
+  }
+
+  if (!passwordMatches) {
+    const error = new Error("Credenciales inválidas");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const isActivo = user.activo !== undefined ? user.activo : (user.active !== false);
+  if (!isActivo) {
+    const error = new Error("Usuario inactivo");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  const { password: _p, passwordHash: _ph, ...userSinPassword } = user;
+  return userSinPassword;
+}</code></pre></figure>
+      <div class="callout warn"><b>Sin token:</b> el frontend guarda el usuario en <code>localStorage</code> y decide el rol con <code>isSuperAdmin</code> (<code>role === 'SUPER_ADMIN'</code>); el backend no vuelve a verificarlo.</div>
+    </article>
+
+    <!-- ---- 4 ---- -->
+    <article class="station" id="est-4">
+      <header><span class="badge">04</span><h3>Usuarios y restaurantes</h3><span class="kicker">backend/src/modules/user/</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span>Datos de usuario o de restaurante.</span></div>
+        <div><b>Transforma</b><span>Valida, hashea con bcrypt y agrega un resumen de tiqueteras.</span></div>
+        <div><b>Entrega</b><span>Usuarios sin credenciales; restaurantes con <code>resumen_tiqueteras</code>.</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Método</th><th>Ruta</th><th>Acción</th></tr></thead>
+        <tbody>
+        <tr><td class="verb">GET · POST</td><td><code>/api/users</code></td><td>Lista usuarios <code>RESTAURANTE</code> (filtro <code>restaurante_id</code>) · crea uno del equipo</td></tr>
+        <tr><td class="verb">GET · POST</td><td><code>/api/users/restaurantes</code></td><td>Lista titulares con su resumen · crea restaurante nuevo</td></tr>
+        <tr><td class="verb">PUT</td><td><code>/api/users/restaurantes/:id</code></td><td>Edita nombre, correo, contraseña, precio; <code>active</code> se propaga a todo el equipo</td></tr>
+        <tr><td class="verb">DELETE</td><td><code>/api/users/restaurantes/:id</code></td><td>Borrado en cascada</td></tr>
+        </tbody></table></div>
+      <h4>Cómo se modela un restaurante</h4>
+      <p>Un "restaurante" es un usuario <code>RESTAURANTE</code> con <code>es_titular=true</code> y un <code>restaurante_id</code> generado como <code>REST-&lt;timestamp&gt;-&lt;rand&gt;</code>. Los empleados comparten ese <code>restaurante_id</code>. <code>buildResumenRestaurante</code> cuenta tiqueteras por estado y calcula el valor estimado con <code>precio_tiquetera</code>.</p>
+      <figure class="code"><figcaption><span>backend/src/modules/user/services/user.service.js</span><em>líneas 5–26</em><b>Resumen por restaurante</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">function buildResumenRestaurante(restauranteId, precioUnitario = 0) {
+  const tiqueteras = restauranteId
+    ? TiqueteraEntity.findMany({ restaurante_id: restauranteId })
+    : [];
+  const pendientes = tiqueteras.filter((t) =&gt; t.estado === "PENDIENTE").length;
+  const activas = tiqueteras.filter((t) =&gt; t.estado === "ACTIVA").length;
+  const finalizadas = tiqueteras.filter((t) =&gt; t.estado === "FINALIZADA").length;
+  const total = tiqueteras.length;
+  const precio = Number(precioUnitario || 0);
+
+  return {
+    total,
+    pendientes,
+    activas,
+    finalizadas,
+    precio_tiquetera: precio,
+    valor_estimado_total: total * precio,
+    valor_estimado_activas: activas * precio,
+    valor_estimado_finalizadas: finalizadas * precio,
+  };
+}</code></pre></figure>
+      <h4>Borrado en cascada</h4>
+      <figure class="code"><figcaption><span>backend/src/modules/user/entity/user.entity.js</span><em>líneas 123–140</em><b>deleteRestauranteCascade</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">static deleteRestauranteCascade(restauranteId, userId) {
+  if (restauranteId) {
+    const tiqRows = db
+      .prepare('SELECT id FROM tiqueteras WHERE restaurante_id = ?')
+      .all(String(restauranteId));
+    for (const row of tiqRows) {
+      db.prepare('DELETE FROM movimientos WHERE tiquetera_id = ?').run(String(row.id));
+      db.prepare('DELETE FROM pin_historial WHERE tiquetera_id = ?').run(String(row.id));
+    }
+    db.prepare('DELETE FROM pin_historial WHERE restaurante_id = ?').run(String(restauranteId));
+    db.prepare('DELETE FROM tiqueteras WHERE restaurante_id = ?').run(String(restauranteId));
+    db.prepare('DELETE FROM clientes WHERE restaurante_id = ?').run(String(restauranteId));
+    db.prepare('DELETE FROM users WHERE restaurante_id = ?').run(String(restauranteId));
+  }
+  if (userId) {
+    db.prepare('DELETE FROM users WHERE id = ?').run(String(userId));
+  }
+}</code></pre></figure>
+    </article>
+
+    <!-- ---- 5 ---- -->
+    <article class="station" id="est-5">
+      <header><span class="badge">05</span><h3>Clientes</h3><span class="kicker">backend/src/modules/cliente/</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span><code>{nombre, identificacion, telefono?, restaurante_id}</code></span></div>
+        <div><b>Transforma</b><span>Valida campos y unicidad por restaurante.</span></div>
+        <div><b>Entrega</b><span>Registro de cliente o listado filtrado.</span></div>
+      </div>
+      <ol class="steps">
+        <li>Exige nombre, identificación y <code>restaurante_id</code>.</li>
+        <li>El teléfono es opcional y debe cumplir <code>^\d{7,15}$</code>.</li>
+        <li>Rechaza una identificación repetida dentro del mismo restaurante.</li>
+      </ol>
+      <figure class="code"><figcaption><span>backend/src/modules/cliente/services/cliente.service.js</span><em>líneas 9–52</em><b>createCliente</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">createCliente({ nombre, identificacion, telefono, restaurante_id }) {
+  if (typeof nombre !== "string" || !nombre.trim()) {
+    throw new Error("El nombre completo es obligatorio");
+  }
+
+  if (
+    identificacion === undefined ||
+    identificacion === null ||
+    !String(identificacion).trim()
+  ) {
+    throw new Error("El número de identificación es obligatorio");
+  }
+
+  if (
+    telefono !== undefined &amp;&amp;
+    telefono !== null &amp;&amp;
+    telefono !== "" &amp;&amp;
+    !/^\d{7,15}$/.test(String(telefono).trim())
+  ) {
+    throw new Error("El teléfono debe contener solo números (7 a 15 dígitos)");
+  }
+
+  if (!restaurante_id &amp;&amp; restaurante_id !== 0) {
+    throw new Error("El id del restaurante es obligatorio");
+  }
+
+  const identificacionLimpia = String(identificacion).trim();
+  const existente = ClienteEntity.findByIdentificacion(
+    identificacionLimpia,
+    restaurante_id
+  );
+  if (existente) {
+    throw new Error(
+      "Ya existe un cliente registrado con esa identificación en este restaurante"
+    );
+  }
+
+  return ClienteEntity.createOne({
+    nombre: nombre.trim(),
+    identificacion: identificacionLimpia,
+    telefono: telefono ? String(telefono).trim() : null,
+    restaurante_id,
+  });
+}</code></pre></figure>
+    </article>
+
+    <!-- ---- 6 ---- -->
+    <article class="station" id="est-6">
+      <header><span class="badge">06</span><h3>Tiqueteras (núcleo del negocio)</h3><span class="kicker">backend/src/modules/tiquetera/</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span>Creación, activación, validación y regeneración de PIN, consultas por QR y operaciones admin.</span></div>
+        <div><b>Transforma</b><span>Máquina de estados <code>PENDIENTE → ACTIVA → FINALIZADA</code>, códigos, hashes y bloqueos.</span></div>
+        <div><b>Entrega</b><span>Tiquetera con saldo, <code>qr_token</code> y errores 400/401/403/404.</span></div>
+      </div>
+      <p>El servicio principal tiene 687 líneas. Los archivos son <code>routes/tiquetera.route.js</code>, <code>controllers/tiquetera.controller.js</code>, <code>services/tiquetera.service.js</code> y <code>entity/tiquetera.entity.js</code> (que también gestiona <code>pin_historial</code>).</p>
+      <h4>Ciclo de vida</h4>
+      <ol class="steps">
+        <li><b>Creación.</b> Estado <code>PENDIENTE</code>, código <code>crypto.randomInt(100000, 1000000)</code> y expiración a 48 h. La reemisión de código solo se permite en <code>PENDIENTE</code>.</li>
+        <li><b>Activación.</b> Valida que el código exista, no esté usado ni vencido, y que el PIN cumpla <code>^\d{6}$</code>. Guarda <code>pin_hash</code> (SHA-256), genera <code>qr_token = crypto.randomUUID()</code>, pasa a <code>ACTIVA</code> y registra el PIN en <code>pin_historial</code> con origen <code>ACTIVACION</code>.</li>
+        <li><b>Validación de PIN.</b> Tres fallos seguidos bloquean la tiquetera 15 minutos (HTTP 403); un acierto reinicia los contadores.</li>
+        <li><b>Regeneración de PIN.</b> El cliente debe aportar el PIN anterior; se registra con origen <code>CLIENTE</code>.</li>
+        <li><b>Vista pública.</b> Saldo y movimientos agrupados por día, sin PIN.</li>
+        <li><b>Administración.</b> Cambiar estado (con reglas de reactivación), cambiar PIN (origen <code>SUPER_ADMIN</code>), listar PINes con su historial y eliminar.</li>
+      </ol>
+      <figure class="code"><figcaption><span>backend/src/modules/tiquetera/services/tiquetera.service.js</span><em>líneas 22–46</em><b>Creación: código y expiración</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">// Generar código aleatorio de 6 dígitos (100000 - 999999)
+const codigoActivacion = crypto.randomInt(100000, 1000000).toString();
+const ahora = Date.now();
+const duracion48HorasMs = 48 * 60 * 60 * 1000;
+const fechaExpiracionCodigo = new Date(ahora + duracion48HorasMs).toISOString();
+
+const nuevaTiquetera = {
+  cliente_id,
+  restaurante_id,
+  total_almuerzos: almuerzos,
+  almuerzos_consumidos: 0,
+  almuerzos_disponibles: almuerzos,
+  estado: "PENDIENTE", // PENDIENTE | ACTIVA | FINALIZADA
+  codigo_activacion: codigoActivacion,
+  fecha_expiracion_codigo: fechaExpiracionCodigo,
+  codigo_usado: false,
+  qr_token: null,
+  pin_hash: null,
+  intentos_fallidos_pin: 0,
+  bloqueado_hasta: null,
+  fecha_activacion: null,
+  fecha_finalizacion: null,
+};
+
+return TiqueteraEntity.createOne(nuevaTiquetera);</code></pre></figure>
+      <figure class="code"><figcaption><span>backend/src/modules/tiquetera/services/tiquetera.service.js</span><em>líneas 107–133</em><b>Activación: hash del PIN y QR</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">// Hashear PIN irreversiblemente usando SHA-256
+const cleanPin = String(pin).trim();
+const pinHash = crypto.createHash("sha256").update(cleanPin).digest("hex");
+// Generar identificador qr_token único e inmutable
+const qrToken = crypto.randomUUID();
+const fechaActivacion = ahora.toISOString();
+
+const updated = TiqueteraEntity.updateOne(tiquetera.id, {
+  estado: "ACTIVA",
+  codigo_usado: true,
+  qr_token: qrToken,
+  pin_hash: pinHash,
+  pin_actual: cleanPin,
+  intentos_fallidos_pin: 0,
+  bloqueado_hasta: null,
+  fecha_activacion: fechaActivacion,
+});
+
+TiqueteraEntity.recordPinHistory({
+  tiquetera_id: tiquetera.id,
+  restaurante_id: tiquetera.restaurante_id,
+  cliente_id: tiquetera.cliente_id,
+  pin_anterior: null,
+  pin_nuevo: cleanPin,
+  origen: "ACTIVACION",
+  fecha_hora: fechaActivacion,
+});</code></pre></figure>
+      <figure class="code"><figcaption><span>backend/src/modules/tiquetera/services/tiquetera.service.js</span><em>líneas 237–274</em><b>Validación de PIN y bloqueo</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">const ahora = Date.now();
+if (tiquetera.bloqueado_hasta &amp;&amp; ahora &lt; new Date(tiquetera.bloqueado_hasta).getTime()) {
+  const minutosRestantes = Math.ceil(
+    (new Date(tiquetera.bloqueado_hasta).getTime() - ahora) / (60 * 1000)
+  );
+  const error = new Error(
+    `Tiquetera bloqueada temporalmente por intentos fallidos de PIN. Intente de nuevo en ${minutosRestantes} minuto(s)`
+  );
+  error.status = 403;
+  throw error;
+}
+
+const pinHashIngresado = crypto
+  .createHash("sha256")
+  .update(String(pin).trim())
+  .digest("hex");
+
+if (pinHashIngresado !== tiquetera.pin_hash) {
+  const nuevosIntentos = (tiquetera.intentos_fallidos_pin || 0) + 1;
+  let nuevoBloqueo = null;
+  if (nuevosIntentos &gt;= 3) {
+    nuevoBloqueo = new Date(ahora + 15 * 60 * 1000).toISOString();
+  }
+
+  TiqueteraEntity.updateOne(tiquetera.id, {
+    intentos_fallidos_pin: nuevosIntentos,
+    bloqueado_hasta: nuevoBloqueo,
+  });
+
+  const mensaje =
+    nuevosIntentos &gt;= 3
+      ? "PIN incorrecto. Se alcanzó el límite de 3 intentos y la tiquetera fue bloqueada temporalmente por 15 minutos."
+      : `PIN incorrecto. Intento ${nuevosIntentos} de 3.`;
+
+  const error = new Error(mensaje);
+  error.status = 401;
+  throw error;
+}</code></pre></figure>
+      <h4>Rutas del módulo</h4>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Método</th><th>Ruta</th><th>Función</th></tr></thead>
+        <tbody>
+        <tr><td class="verb">POST</td><td><code>/api/tiqueteras</code></td><td>Crear tiquetera <code>PENDIENTE</code></td></tr>
+        <tr><td class="verb">GET</td><td><code>/api/tiqueteras</code></td><td>Listar con filtros</td></tr>
+        <tr><td class="verb">POST</td><td><code>/activar</code></td><td>Activar con código y PIN</td></tr>
+        <tr><td class="verb">POST</td><td><code>/validar-pin</code> · <code>/:id/validar-pin</code></td><td>Validar PIN</td></tr>
+        <tr><td class="verb">POST</td><td><code>/regenerar-pin</code></td><td>Cambiar PIN con el anterior</td></tr>
+        <tr><td class="verb">POST</td><td><code>/:id/reemitir-codigo</code></td><td>Nuevo código de 48 h</td></tr>
+        <tr><td class="verb">GET</td><td><code>/qr/:qrToken</code> · <code>/public/qr/:qrToken</code></td><td>Abrir por QR · vista pública</td></tr>
+        <tr><td class="verb">GET</td><td><code>/:id/codigo-activacion</code></td><td>Entregar el código (solo <code>PENDIENTE</code>)</td></tr>
+        <tr><td class="verb">GET</td><td><code>/admin/pines</code></td><td>PINes e historial (admin)</td></tr>
+        <tr><td class="verb">PUT</td><td><code>/:id/admin-pin</code> · <code>/:id/estado</code></td><td>Admin: PIN y estado</td></tr>
+        <tr><td class="verb">GET · DELETE</td><td><code>/:id</code></td><td>Consultar · eliminar (<code>ACTIVA</code> solo con <code>admin=true</code>)</td></tr>
+        </tbody></table></div>
+      <div class="callout warn"><b>Atención:</b> las rutas de administración no verifican credenciales ni rol. Además, <code>pin_actual</code> y <code>pin_historial</code> guardan los PINes en claro, junto al hash SHA-256 sin sal.</div>
+    </article>
+
+    <!-- ---- 7 ---- -->
+    <article class="station" id="est-7">
+      <header><span class="badge">07</span><h3>Consumos (movimientos)</h3><span class="kicker">backend/src/modules/consumo/</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span><code>{tiquetera_id, pin, cantidad, usuario_id, cuadros_seleccionados}</code> y reversas.</span></div>
+        <div><b>Transforma</b><span>Valida estado, bloqueo, PIN y saldo; actualiza la tiquetera e inserta un movimiento.</span></div>
+        <div><b>Entrega</b><span><code>{mensaje, movimiento, tiquetera}</code> y el historial.</span></div>
+      </div>
+      <h4>Registrar un consumo</h4>
+      <ol class="steps">
+        <li>Valida <code>tiquetera_id</code>, <code>usuario_id</code>, cantidad entera mayor a 0 y PIN de 6 dígitos.</li>
+        <li>Exige estado <code>ACTIVA</code> y que no esté bloqueada; compara el PIN con SHA-256 y aplica la misma política de 3 intentos y 15 minutos.</li>
+        <li>Comprueba saldo suficiente, actualiza <code>almuerzos_consumidos</code> y <code>almuerzos_disponibles</code>, y pasa a <code>FINALIZADA</code> al llegar a 0.</li>
+        <li>Inserta un movimiento <code>CONSUMO</code> con <code>saldo_anterior</code> y <code>saldo_posterior</code>.</li>
+      </ol>
+      <figure class="code"><figcaption><span>backend/src/modules/consumo/services/consumo.service.js</span><em>líneas 115–143</em><b>Saldo, finalización y movimiento</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">// 6. Validar saldo disponible (RF-12)
+if (cantidadAlmuerzos &gt; tiquetera.almuerzos_disponibles) {
+  const error = new Error(
+    `Saldo insuficiente: no es posible descontar ${cantidadAlmuerzos} almuerzo(s). Almuerzos disponibles: ${tiquetera.almuerzos_disponibles}`
+  );
+  error.status = 400;
+  throw error;
+}
+
+// 7. Actualización automática de saldos (RF-11)
+const saldoAnterior = tiquetera.almuerzos_disponibles;
+const nuevosConsumidos = tiquetera.almuerzos_consumidos + cantidadAlmuerzos;
+const nuevosDisponibles = tiquetera.almuerzos_disponibles - cantidadAlmuerzos;
+
+// 8. Finalización automática si llega a 0 (RF-13)
+const finalizar = nuevosDisponibles === 0;
+const fechaActualIso = new Date().toISOString();
+
+const actualizacionTiquetera = {
+  almuerzos_consumidos: nuevosConsumidos,
+  almuerzos_disponibles: nuevosDisponibles,
+  estado: finalizar ? "FINALIZADA" : "ACTIVA",
+  fecha_finalizacion: finalizar ? fechaActualIso : tiquetera.fecha_finalizacion,
+};
+
+const tiqueteraActualizada = TiqueteraEntity.updateOne(
+  tiquetera.id,
+  actualizacionTiquetera
+);</code></pre></figure>
+      <h4>Corregir un consumo (reversa)</h4>
+      <p>La reversa nunca borra el movimiento original: inserta uno nuevo de tipo <code>REVERSA</code>. Solo se permite el mismo día, un cuadro una sola vez, y reactiva la tiquetera si estaba <code>FINALIZADA</code>.</p>
+      <figure class="code"><figcaption><span>backend/src/modules/consumo/services/consumo.service.js</span><em>líneas 196–204</em><b>Restricción del mismo día</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">// Validar restricción del mismo día calendario (RF-14)
+const fechaConsumoStr = new Date(consumoOriginal.fecha_hora).toISOString().slice(0, 10);
+const fechaHoyStr = new Date().toISOString().slice(0, 10);
+
+if (fechaConsumoStr !== fechaHoyStr) {
+  const error = new Error("Solo es posible corregir consumos registrados dentro del mismo día calendario");
+  error.status = 400;
+  throw error;
+}</code></pre></figure>
+      <figure class="code"><figcaption><span>backend/src/modules/consumo/services/consumo.service.js</span><em>líneas 268–282</em><b>Movimiento de reversa</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">// Crear registro de reversa inmutable (RF-14, RNF-04)
+const movimiento = ConsumoEntity.createOne({
+  tiquetera_id: tiquetera.id,
+  tipo: "REVERSA",
+  consumo_referencia_id: consumoOriginal.id,
+  cantidad: cantidadRevertir,
+  usuario_id,
+  motivo,
+  fecha_hora: new Date().toISOString(),
+  saldo_anterior: saldoAnterior,
+  saldo_posterior: nuevosDisponibles,
+  cuadros_seleccionados: cuadro_deseleccionado !== null
+    ? [cuadro_deseleccionado]
+    : cuadrosPendientes,
+});</code></pre></figure>
+      <div class="callout warn"><b>Zona horaria:</b> "mismo día" se calcula con <code>toISOString().slice(0,10)</code>, es decir, en UTC y no en hora local.</div>
+    </article>
+
+    <!-- ---- 8 ---- -->
+    <article class="station" id="est-8">
+      <header><span class="badge">08</span><h3>Rejilla</h3><span class="kicker">backend/src/modules/rejilla/</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span><code>GET /api/rejilla/:qrToken</code></span></div>
+        <div><b>Transforma</b><span>Reproduce los movimientos sobre los cuadros 1..<code>total_almuerzos</code>.</span></div>
+        <div><b>Entrega</b><span><code>{qr_token, estado, cliente, saldo, rejilla[]}</code></span></div>
+      </div>
+      <ol class="steps">
+        <li>Busca la tiquetera por <code>qr_token</code>; si no existe, cae a datos mock en memoria (<code>ABC123</code>, <code>XYZ789</code>, <code>PEN001</code>).</li>
+        <li>Recorre los movimientos en orden: un <code>CONSUMO</code> marca cuadros con su fecha; una <code>REVERSA</code> los libera.</li>
+        <li>Si quedan menos cuadros marcados que <code>almuerzos_consumidos</code>, completa los faltantes en orden.</li>
+        <li>Devuelve un arreglo <code>{numero, estado: "consumido" | "disponible", fechaConsumo}</code>.</li>
+      </ol>
+      <figure class="code"><figcaption><span>backend/src/modules/rejilla/rejilla.service.js</span><em>líneas 28–65</em><b>Reconstrucción por movimientos</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">const cuadroMap = new Map();
+
+// Procesar movimientos cronológicos
+for (const m of movimientos) {
+  if (m.tipo === "CONSUMO") {
+    if (Array.isArray(m.cuadros_seleccionados) &amp;&amp; m.cuadros_seleccionados.length &gt; 0) {
+      for (const cuadro of m.cuadros_seleccionados) {
+        const num = Number(cuadro) &gt;= 1 ? Number(cuadro) : Number(cuadro) + 1;
+        cuadroMap.set(num, m.fecha_hora);
+      }
+    } else {
+      // Asignar a los siguientes cuadros disponibles
+      let asignados = 0;
+      for (let num = 1; num &lt;= tiqueteraReal.total_almuerzos &amp;&amp; asignados &lt; m.cantidad; num++) {
+        if (!cuadroMap.has(num)) {
+          cuadroMap.set(num, m.fecha_hora);
+          asignados++;
+        }
+      }
+    }
+  } else if (m.tipo === "REVERSA") {
+    if (Array.isArray(m.cuadros_seleccionados) &amp;&amp; m.cuadros_seleccionados.length &gt; 0) {
+      for (const cuadro of m.cuadros_seleccionados) {
+        const num = Number(cuadro) &gt;= 1 ? Number(cuadro) : Number(cuadro) + 1;
+        cuadroMap.delete(num);
+      }
+    } else {
+      // Desasignar los últimos cuadros consumidos
+      let desasignados = 0;
+      for (let num = tiqueteraReal.total_almuerzos; num &gt;= 1 &amp;&amp; desasignados &lt; m.cantidad; num--) {
+        if (cuadroMap.has(num)) {
+          cuadroMap.delete(num);
+          desasignados++;
+        }
+      }
+    }
+  }
+}</code></pre></figure>
+    </article>
+
+    <!-- ---- 9 ---- -->
+    <article class="station" id="est-9">
+      <header><span class="badge">09</span><h3>Frontend SPA</h3><span class="kicker">frontend/src/</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span>URL, acciones del usuario y <code>localStorage</code>.</span></div>
+        <div><b>Transforma</b><span>Elige la vista según ruta y rol; llama a la API.</span></div>
+        <div><b>Entrega</b><span>UI compilada en <code>frontend/dist</code>.</span></div>
+      </div>
+      <p>No usa librería de router: navega con <code>window.history.pushState</code> y el evento <code>popstate</code>. Las vistas se eligen según la ruta y el rol del usuario.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Modo</th><th>Vistas</th></tr></thead>
+        <tbody>
+        <tr><td>Pública</td><td><code>ActivacionView</code>, <code>ClienteTiqueteraView</code> (con <code>QrPassCard</code>, <code>HistorialMovimientos</code>, <code>QrScanner</code>)</td></tr>
+        <tr><td>Restaurante</td><td><code>TiqueterasView</code>, <code>ConsumoView</code> (<code>RejillaGrid</code>), <code>ClientesView</code>, <code>UsuariosView</code>, con pestañas en <code>Navbar</code></td></tr>
+        <tr><td><code>SUPER_ADMIN</code></td><td><code>SuperAdminView</code> (1775 líneas)</td></tr>
+        <tr><td>Soporte</td><td><code>LoginView</code>, <code>Modal</code>, <code>Toast</code>, <code>context/AuthContext.jsx</code>, <code>services/api.js</code>, <code>utils/qr.js</code></td></tr>
+        </tbody></table></div>
+      <h4>Cliente HTTP</h4>
+      <figure class="code"><figcaption><span>frontend/src/services/api.js</span><em>líneas 1–16</em><b>Base de la API y manejo de errores</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+/**
+ * Helper para procesar respuestas de la API
+ */
+async function handleResponse(res) {
+  const data = await res.json().catch(() =&gt; ({}));
+  if (!res.ok) {
+    const errorMsg = data.error || data.message || `Error ${res.status}: ${res.statusText}`;
+    const err = new Error(errorMsg);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+}</code></pre></figure>
+      <h4>Rol en el cliente</h4>
+      <figure class="code"><figcaption><span>frontend/src/context/AuthContext.jsx</span><em>líneas 54–54</em><b>Detección del superusuario</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="jsx">const isSuperAdmin = (user?.role || user?.rol) === 'SUPER_ADMIN';</code></pre></figure>
+      <h4>QR</h4>
+      <p><code>utils/qr.js</code> extrae el UUID del QR (suelto o dentro de una URL), construye los enlaces públicos y dibuja el pase con la librería <code>qrcode</code>.</p>
+      <figure class="code"><figcaption><span>frontend/src/utils/qr.js</span><em>líneas 4–23</em><b>extractQrToken y URLs públicas</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+/** Acepta el token suelto o la URL completa que contiene el QR. */
+export function extractQrToken(raw) {
+  const text = String(raw || '').trim();
+  const uuid = text.match(UUID_RE);
+  if (uuid) return uuid[0];
+  return text.split('/').filter(Boolean).pop() || '';
+}
+
+export function isQrScanSupported() {
+  return typeof window !== 'undefined' &amp;&amp; 'BarcodeDetector' in window;
+}
+
+/** Construye la URL pública de consulta para el cliente (HU-C4 &amp; HU-C5). */
+export function buildClienteUrl(qrToken) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${origin}/tiquetera/${encodeURIComponent(qrToken)}`;
+}</code></pre></figure>
+      <p>En desarrollo, Vite sirve en el puerto 5173 y reenvía <code>/api</code> al backend (<code>frontend/vite.config.js</code>), con Tailwind 4 y React Compiler.</p>
+    </article>
+
+    <!-- ---- 10 ---- -->
+    <article class="station" id="est-10">
+      <header><span class="badge">10</span><h3>Pruebas</h3><span class="kicker">backend/tests/</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span>La app Express en un puerto efímero y las entities/services importados.</span></div>
+        <div><b>Transforma</b><span>Corre sobre SQLite <code>:memory:</code>.</span></div>
+        <div><b>Entrega</b><span>Resultado de <code>npm test</code>.</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Archivo</th><th>Cubre</th></tr></thead>
+        <tbody>
+        <tr><td><code>api-http.test.js</code></td><td>Integración HTTP de la API</td></tr>
+        <tr><td><code>historias-de-usuario-completas.test.js</code></td><td>HU-R1 a HU-R12 y HU-C1 a HU-C5</td></tr>
+        <tr><td><code>tiquetera-consumo.test.js</code></td><td>Ciclo de activación y consumo</td></tr>
+        <tr><td><code>tiquetera-filtrado.test.js</code></td><td>Filtros del listado</td></tr>
+        </tbody></table></div>
+      <figure class="code"><figcaption><span>backend/tests/api-http.test.js</span><em>líneas 1–7</em><b>Estructura de la suite de integración</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">import { describe, it, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { app } from "../app.js";
+
+describe("API Endpoints HTTP Integration Tests", () =&gt; {
+  let server;
+  let baseUrl;</code></pre></figure>
+      <p>No hay pruebas del frontend; solo se ejecuta <code>eslint</code> (<code>npm run lint -w frontend</code>).</p>
+    </article>
+
+    <!-- ---- 11 ---- -->
+    <article class="station" id="est-11">
+      <header><span class="badge">11</span><h3>Despliegue / infraestructura</h3><span class="kicker">Docker · GitHub Actions</span></header>
+      <div class="io">
+        <div><b>Recibe</b><span><code>push</code> a <code>main</code> o <code>workflow_dispatch</code>.</span></div>
+        <div><b>Transforma</b><span>Entra por SSH, actualiza el código y reconstruye los contenedores.</span></div>
+        <div><b>Entrega</b><span>Aplicación desplegada.</span></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Archivo</th><th>Función</th></tr></thead>
+        <tbody>
+        <tr><td><code>Dockerfile</code></td><td>Multi-stage Node 22-slim: dependencias + <code>prisma generate</code>, build del frontend y runner <code>node backend/app.js</code> con HEALTHCHECK</td></tr>
+        <tr><td><code>backend/Dockerfile</code></td><td>Node 24-slim para el servicio <code>backend</code> de compose</td></tr>
+        <tr><td><code>frontend/Dockerfile</code></td><td>Build en Node 24-alpine y servido con <code>nginx:alpine</code></td></tr>
+        <tr><td><code>docker-compose.yml</code></td><td><code>mongo:7.0</code> (rs0, host 29474), <code>backend</code> (29473→3000), <code>frontend</code> (9081→80)</td></tr>
+        <tr><td><code>frontend/nginx/nginx.conf</code></td><td>Fallback del SPA y proxy de <code>/api/</code></td></tr>
+        <tr><td><code>.github/workflows/deployment-main.yml</code></td><td>Despliegue por SSH</td></tr>
+        </tbody></table></div>
+      <figure class="code"><figcaption><span>.github/workflows/deployment-main.yml</span><em>líneas 1–29</em><b>Workflow de despliegue</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="yaml">name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executing remote SSH commands
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            cd ~/projects/electivaVNocturno/equipo-1/Tiquetera
+            git fetch origin
+            git checkout main
+            git pull origin main
+            docker compose down
+            docker compose up --build -d
+            exit</code></pre></figure>
+      <figure class="code"><figcaption><span>frontend/nginx/nginx.conf</span><em>líneas 1–18</em><b>Nginx: SPA y proxy</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="conf">server {
+    listen 80;
+    server_name equipo-1-eleV-n-dev.apolobyte.online;
+
+    # Servir el frontend (archivos generados por React/Vite)
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Redirigir llamadas de la API al backend
+    location /api/ {
+        proxy_pass http://backend:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}</code></pre></figure>
+      <div class="callout"><b>Un solo push a <code>main</code> reconstruye todo:</b> hace <code>git pull</code>, <code>docker compose down</code> y <code>docker compose up --build -d</code> en el servidor.</div>
+    </article>
+  </section>
+
+  <!-- ===================== 4 ===================== -->
+  <section id="almacenes">
+    <h2><span class="n">Sección 4</span>Almacenes (bases de datos y estado)</h2>
+    <p class="lead">La información persiste en SQLite. Prisma/MongoDB está presente pero no participa en el flujo de negocio.</p>
+
+    <h4>4.1 SQLite — almacén principal real</h4>
+    <p>Archivo <code>backend/data/tiquetera.db</code> (o <code>DB_PATH</code>; <code>:memory:</code> en tests), con el módulo nativo <code>node:sqlite</code> y modo <code>WAL</code>. El esquema está en <code>initSchema()</code> de <code>database.js</code>.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Tabla</th><th>Contenido clave</th></tr></thead>
+      <tbody>
+      <tr><td><code>users</code></td><td><code>id, name, email (UNIQUE), passwordHash, password, role, restaurante_id, es_titular, precio_tiquetera, active, createdAt</code></td></tr>
+      <tr><td><code>clientes</code></td><td><code>id, nombre, identificacion, telefono, restaurante_id, createdAt</code></td></tr>
+      <tr><td><code>tiqueteras</code></td><td>totales, consumidos y disponibles; <code>estado</code>, <code>codigo_activacion</code>, <code>qr_token</code>, <code>pin_hash</code>, <code>pin_actual</code>, <code>intentos_fallidos_pin</code>, <code>bloqueado_hasta</code> y fechas</td></tr>
+      <tr><td><code>movimientos</code></td><td><code>tipo</code> (CONSUMO o REVERSA), <code>consumo_referencia_id</code>, <code>cantidad</code>, <code>usuario_id</code>, <code>motivo</code>, <code>saldo_anterior/posterior</code>, <code>cuadros_seleccionados</code> (JSON en TEXT)</td></tr>
+      <tr><td><code>pin_historial</code></td><td><code>tiquetera_id, restaurante_id, cliente_id, pin_anterior, pin_nuevo, origen, fecha_hora</code></td></tr>
+      </tbody></table></div>
+    <figure class="code"><figcaption><span>backend/src/config/database.js</span><em>líneas 57–103</em><b>Tablas tiqueteras, movimientos y pin_historial</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="sql">CREATE TABLE IF NOT EXISTS tiqueteras (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL,
+  restaurante_id TEXT,
+  total_almuerzos INTEGER NOT NULL,
+  almuerzos_consumidos INTEGER NOT NULL DEFAULT 0,
+  almuerzos_disponibles INTEGER NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'PENDIENTE',
+  codigo_activacion TEXT,
+  fecha_expiracion_codigo TEXT,
+  codigo_usado INTEGER NOT NULL DEFAULT 0,
+  qr_token TEXT,
+  pin_hash TEXT,
+  pin_actual TEXT,
+  intentos_fallidos_pin INTEGER NOT NULL DEFAULT 0,
+  bloqueado_hasta TEXT,
+  fecha_activacion TEXT,
+  fecha_finalizacion TEXT,
+  fecha_regeneracion_pin TEXT,
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS movimientos (
+  id TEXT PRIMARY KEY,
+  tiquetera_id TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT 'CONSUMO',
+  consumo_referencia_id TEXT,
+  cantidad INTEGER NOT NULL,
+  usuario_id TEXT,
+  motivo TEXT,
+  fecha_hora TEXT NOT NULL,
+  saldo_anterior INTEGER,
+  saldo_posterior INTEGER,
+  cuadros_seleccionados TEXT
+);
+
+CREATE TABLE IF NOT EXISTS pin_historial (
+  id TEXT PRIMARY KEY,
+  tiquetera_id TEXT NOT NULL,
+  restaurante_id TEXT,
+  cliente_id TEXT,
+  pin_anterior TEXT,
+  pin_nuevo TEXT NOT NULL,
+  origen TEXT NOT NULL DEFAULT 'CLIENTE',
+  fecha_hora TEXT NOT NULL
+);</code></pre></figure>
+    <p>Los IDs son texto generado en código: <code>TIQ-&lt;ts&gt;-&lt;rand&gt;</code>, <code>MOV-…</code>, <code>PINH-…</code>, <code>REST-…</code>. El campo <code>origen</code> de <code>pin_historial</code> toma los valores <code>ACTIVACION</code>, <code>CLIENTE</code> y <code>SUPER_ADMIN</code>.</p>
+    <figure class="code"><figcaption><span>backend/src/modules/tiquetera/entity/tiquetera.entity.js</span><em>líneas 154–174</em><b>Registro de cambios de PIN</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">static recordPinHistory(data) {
+  const id = String(data.id || `PINH-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
+  const fechaHora = data.fecha_hora || new Date().toISOString();
+
+  db.prepare(`
+    INSERT INTO pin_historial (
+      id, tiquetera_id, restaurante_id, cliente_id, pin_anterior, pin_nuevo, origen, fecha_hora
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id,
+    String(data.tiquetera_id),
+    data.restaurante_id ? String(data.restaurante_id) : null,
+    data.cliente_id ? String(data.cliente_id) : null,
+    data.pin_anterior ? String(data.pin_anterior) : null,
+    String(data.pin_nuevo),
+    data.origen || 'CLIENTE',
+    fechaHora
+  );
+
+  return db.prepare('SELECT * FROM pin_historial WHERE id = ?').get(id);
+}</code></pre></figure>
+
+    <h4>4.2 Prisma + MongoDB — sin uso funcional</h4>
+    <p><code>backend/prisma/schema.prisma</code> define <code>User</code>, <code>Cliente</code>, <code>Tiquetera</code> y <code>Movimiento</code> (colecciones <code>users, clientes, tiqueteras, movimientos</code>). No incluye <code>pin_historial</code>, <code>restaurante_id</code>, <code>es_titular</code>, <code>precio_tiquetera</code> ni <code>pin_actual</code>. Solo <code>connectPrisma()</code> y <code>seedPrismaDefaults()</code> lo tocan.</p>
+    <figure class="code"><figcaption><span>backend/prisma/schema.prisma</span><em>líneas 1–14</em><b>Datasource y modelo User</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="prisma">datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @map("_id")
+  name         String
+  email        String   @unique
+  passwordHash String?</code></pre></figure>
+
+    <h4>4.3 Estado en memoria y en el cliente</h4>
+    <ul>
+      <li><code>seedUsers</code> en <code>login.entity.js</code> y las tiqueteras mock de <code>rejilla.entity.js</code>: datos fijos de respaldo.</li>
+      <li>Navegador: <code>localStorage['tiquetera_auth_user']</code> (objeto de usuario completo) y estado React en <code>App.jsx</code> y las vistas.</li>
+      <li>Docker: volúmenes <code>mongo_data_dev</code> y <code>backend_data_dev</code>.</li>
+    </ul>
+  </section>
+
+  <!-- ===================== 5 ===================== -->
+  <section id="salidas">
+    <h2><span class="n">Sección 5</span>Producto terminado (salidas)</h2>
+    <p class="lead">Lo que el sistema devuelve al usuario o a otros servicios. No hay integraciones externas: sin correo, SMS, pasarelas de pago ni APIs de terceros; solo se cargan fuentes de Google Fonts desde <code>frontend/index.html</code>.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Salida</th><th>Detalle</th></tr></thead>
+      <tbody>
+      <tr><td>Respuestas JSON</td><td>Objetos de tiquetera, cliente, usuario y movimiento; mensajes <code>{mensaje, …}</code> y errores <code>{error}</code> con códigos 200, 201, 400, 401, 403 y 404. <code>login</code> devuelve el usuario sin token.</td></tr>
+      <tr><td>Datos derivados</td><td>Saldo <code>{total, consumidos, disponibles}</code>, rejilla de cuadros, historial (también agrupado por día en la vista pública), <code>resumen_tiqueteras</code> y <code>valor_estimado_*</code>, historial de PINes.</td></tr>
+      <tr><td>QR y enlaces</td><td>Canvas del QR (<code>qrcode</code>) con la URL <code>/tiquetera/&lt;qr_token&gt;</code> y enlaces <code>/activar?codigo=&lt;código&gt;</code>.</td></tr>
+      <tr><td>Aplicación web</td><td>El SPA compilado (<code>frontend/dist</code>), servido por Express o por Nginx con proxy de <code>/api/</code>.</td></tr>
+      <tr><td>Salud</td><td><code>GET /health</code> devuelve <code>{"status":"ok"}</code>; lo usa el <code>HEALTHCHECK</code> del Dockerfile raíz.</td></tr>
+      </tbody></table></div>
+    <figure class="code"><figcaption><span>backend/src/modules/tiquetera/services/tiquetera.service.js</span><em>líneas 393–440</em><b>Vista pública del cliente</b><button class="copy" aria-label="Copiar código">Copiar</button></figcaption><pre><code data-lang="js">getVistaPublicaCliente(qrToken) {
+  if (!qrToken || !String(qrToken).trim()) {
+    const error = new Error("El qr_token es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  const tiquetera = TiqueteraEntity.findByQrToken(String(qrToken).trim());
+  if (!tiquetera) {
+    const error = new Error("Tiquetera no encontrada");
+    error.status = 404;
+    throw error;
+  }
+
+  const cliente = ClienteEntity.findById(tiquetera.cliente_id);
+  const movimientos = ConsumoEntity.findByTiqueteraId(tiquetera.id).map((m) =&gt; ({
+    id: m.id,
+    tipo: m.tipo,
+    cantidad: m.cantidad,
+    fecha_hora: m.fecha_hora,
+    cuadros_afectados: m.cuadros_seleccionados || [],
+    saldo_posterior: m.saldo_posterior,
+  }));
+
+  // Agrupar movimientos por día calendario
+  const movimientosPorDia = {};
+  for (const mov of movimientos) {
+    const dia = mov.fecha_hora.slice(0, 10);
+    if (!movimientosPorDia[dia]) {
+      movimientosPorDia[dia] = [];
+    }
+    movimientosPorDia[dia].push(mov);
+  }
+
+  return {
+    qr_token: tiquetera.qr_token,
+    url_consulta: `/api/tiqueteras/public/qr/${tiquetera.qr_token}`,
+    cliente_nombre: cliente ? cliente.nombre : "Cliente",
+    estado: tiquetera.estado,
+    saldo: {
+      total: tiquetera.total_almuerzos,
+      consumidos: tiquetera.almuerzos_consumidos,
+      disponibles: tiquetera.almuerzos_disponibles,
+    },
+    movimientos,
+    movimientos_por_dia: movimientosPorDia,
+  };
+}</code></pre></figure>
+  </section>
+
+  <!-- ===================== anexo ===================== -->
+  <section id="hallazgos">
+    <h2><span class="n">Anexo</span>Hallazgos observados al documentar</h2>
+    <ol class="steps">
+      <li><b>Persistencia dual.</b> SQLite es la real; Prisma/Mongo está desalineado y sin uso funcional, aunque <code>docker-compose</code> levanta Mongo y los Dockerfile generan el cliente Prisma.</li>
+      <li><b>Sin autenticación en la API.</b> Ningún middleware valida usuario ni rol. <code>?admin=true</code> en <code>DELETE /api/tiqueteras/:id</code> y las rutas <code>admin-pin</code>, <code>estado</code> y <code>admin/pines</code> quedan abiertas; el control de rol vive solo en <code>frontend/src/App.jsx</code>.</li>
+      <li><b>Credenciales.</b> Contraseñas semilla en texto plano en <code>password</code>, y PINes guardados en claro en <code>tiqueteras.pin_actual</code> y <code>pin_historial</code>, además del <code>pin_hash</code> SHA-256 sin sal.</li>
+      <li><b>Rutas de restaurantes abiertas.</b> Listar, crear, editar y borrar en cascada desde <code>/api/users/restaurantes</code> no exige rol. El superusuario se escribe <code>SUPER_ADMIN</code> (con guion bajo) en el código.</li>
+      <li><b>Reversa en UTC.</b> La regla del "mismo día" compara fechas en UTC, por lo que puede no coincidir con el día local.</li>
+    </ol>
+    <div class="foot">Generado a partir de <code>docs-fabrica/ARQUITECTURA.md</code> y del código del repositorio · los bloques de código son extractos literales con su ruta y rango de líneas.</div>
+  </section>
+  </div>
+</main>
+
+<script>
+/* resaltado monocromo mínimo */
+(function(){
+  const KW={
+    js:'const|let|var|function|return|if|else|for|while|new|throw|import|from|export|default|async|await|class|static|try|catch|of|in|null|true|false|undefined',
+    jsx:'const|let|var|function|return|if|else|for|while|new|throw|import|from|export|default|async|await|class|try|catch|of|in|null|true|false|undefined',
+    json:'true|false|null',
+    sql:'CREATE|TABLE|IF|NOT|EXISTS|PRIMARY|KEY|TEXT|INTEGER|REAL|NULL|DEFAULT|UNIQUE|INSERT|INTO|VALUES|SELECT|FROM|WHERE|DELETE|UPDATE|SET',
+    yaml:'true|false|null|on|name|jobs|steps|uses|with|run',
+    conf:'server|listen|server_name|location|root|index|try_files|proxy_pass|proxy_set_header',
+    dockerfile:'FROM|RUN|COPY|CMD|ENV|EXPOSE|HEALTHCHECK|WORKDIR|AS',
+    prisma:'datasource|generator|model|provider|url|env|String|Boolean|DateTime|Int|Json'
+  };
+  function hl(code){
+    const lang=code.dataset.lang||'js';
+    const txt=code.textContent;
+    const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const kw=KW[lang]||KW.js;
+    const re=new RegExp(
+      '(\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*|(?:^|\\s)#[^\\n]*|--[^\\n]*)'+   // 1 comentario
+      '|(`[^`]*`|"(?:[^"\\\\\\n]|\\\\.)*"|\\\'(?:[^\\\'\\\\\\n]|\\\\.)*\\\')'+      // 2 cadena
+      '|\\b('+kw+')\\b'+                                                        // 3 palabra clave
+      '|\\b(\\d+(?:\\.\\d+)?)\\b','gm');
+    let out='',last=0,m;
+    while((m=re.exec(txt))){
+      out+=esc(txt.slice(last,m.index));
+      const cls=m[1]?'t-c':m[2]?'t-s':m[3]?'t-k':'t-n';
+      out+=`<span class="${cls}">${esc(m[0])}</span>`;
+      last=m.index+m[0].length;
+    }
+    code.innerHTML=out+esc(txt.slice(last));
+  }
+  document.querySelectorAll('pre code').forEach(hl);
+  document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+    const t=b.closest('figure').querySelector('code').textContent;
+    const done=()=>{b.textContent='Copiado';setTimeout(()=>b.textContent='Copiar',1400)};
+    if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done,fb)}else fb();
+    function fb(){const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;left:-9999px';document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(a)}
+  }));
+})();
+
+/* menú móvil */
+const menuBtn=document.getElementById('menuBtn');
+menuBtn.addEventListener('click',()=>document.body.classList.toggle('open'));
+document.getElementById('side').addEventListener('click',e=>{if(e.target.closest('a'))document.body.classList.remove('open')});
+
+/* scroll-spy */
+(function(){
+  const links=[...document.querySelectorAll('#side a.nav')];
+  const map=new Map(links.map(a=>[a.getAttribute('href').slice(1),a]));
+  const targets=[...map.keys()].map(id=>document.getElementById(id)).filter(Boolean);
+  const vis=new Set();
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>e.isIntersecting?vis.add(e.target.id):vis.delete(e.target.id));
+    const first=targets.find(t=>vis.has(t.id));
+    if(first){links.forEach(l=>l.classList.remove('on'));const a=map.get(first.id);a.classList.add('on');
+      a.scrollIntoView({block:'nearest'})}
+  },{rootMargin:'-10% 0px -70% 0px'});
+  targets.forEach(t=>io.observe(t));
+})();
+</script>
+</body>
+</html>
