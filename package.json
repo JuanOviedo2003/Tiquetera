@@ -15,9 +15,11 @@
     "start": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run start -w backend\" \"npm run preview -w frontend\"",
     "test": "npm run test -w backend",
     "prisma:generate": "npm run prisma:generate -w backend",
-    "prisma:push": "npm run prisma:push -w backend"
+    "prisma:push": "npm run prisma:push -w backend",
+    "test:frontend": "npm run test -w frontend"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "concurrently": "^10.0.6"
   },
   "overrides": {
