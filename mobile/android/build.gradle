@@ -21,5 +21,15 @@ allprojects {
   }
 }
 
+// Windows: acorta la ruta de build de CMake/ninja (limite de 260 caracteres)
+subprojects { sub ->
+  sub.afterEvaluate {
+    def androidExt = sub.extensions.findByName('android')
+    if (androidExt != null && sub.name == 'react-native-worklets') {
+      androidExt.externalNativeBuild.cmake.buildStagingDirectory = new File("C:/b/${sub.name}")
+    }
+  }
+}
+
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
