@@ -5,12 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { colors, commonStyles } from '../theme/colors';
 
 export default function UsuariosScreen({ onShowToast }) {
   const { restauranteId } = useAuth();
@@ -66,22 +64,29 @@ export default function UsuariosScreen({ onShowToast }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Usuarios</Text>
-        <TouchableOpacity style={styles.newBtn} onPress={() => setShowCreate((v) => !v)}>
-          <Text style={styles.newBtnText}>{showCreate ? 'Cerrar' : '+ Nuevo'}</Text>
+    <ScrollView contentContainerClassName="p-4 pb-8" keyboardShouldPersistTaps="handled">
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="text-xl font-extrabold text-ink">Usuarios</Text>
+        <TouchableOpacity
+          onPress={() => setShowCreate((v) => !v)}
+          className="bg-primary px-3.5 py-2 rounded-xl"
+        >
+          <Text className="text-white font-bold text-xs">
+            {showCreate ? 'Cerrar' : '+ Nuevo'}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {showCreate && (
-        <View style={commonStyles.card}>
-          <Text style={styles.cardTitle}>Nuevo usuario del restaurante</Text>
+        <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+          <Text className="text-base font-bold text-ink mb-2.5">
+            Nuevo usuario del restaurante
+          </Text>
           <TextInput
             value={name}
             onChangeText={setName}
             placeholder="Nombre"
-            style={[commonStyles.input, { marginBottom: 10 }]}
+            className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
           />
           <TextInput
             value={email}
@@ -89,45 +94,42 @@ export default function UsuariosScreen({ onShowToast }) {
             placeholder="Correo electrónico"
             keyboardType="email-address"
             autoCapitalize="none"
-            style={[commonStyles.input, { marginBottom: 10 }]}
+            className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
           />
           <TextInput
             value={password}
             onChangeText={setPassword}
             placeholder="Contraseña"
             secureTextEntry
-            style={[commonStyles.input, { marginBottom: 12 }]}
+            className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-3"
           />
-          <TouchableOpacity style={commonStyles.buttonPrimary} onPress={handleCrear} disabled={saving}>
-            {saving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnPriText}>Crear usuario</Text>}
+          <TouchableOpacity
+            onPress={handleCrear}
+            disabled={saving}
+            className="bg-primary rounded-xl py-3 items-center"
+          >
+            {saving ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text className="text-white font-bold text-xs">Crear usuario</Text>
+            )}
           </TouchableOpacity>
         </View>
       )}
 
       {loading ? (
-        <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
+        <ActivityIndicator color="#FF6B47" className="mt-5" />
       ) : (
         users.map((u) => (
-          <View key={String(u.id)} style={commonStyles.card}>
-            <Text style={styles.name}>{u.name || u.nombre}</Text>
-            <Text style={styles.meta}>{u.email}</Text>
-            <Text style={styles.role}>{u.role || u.rol || 'RESTAURANTE'}</Text>
+          <View key={String(u.id)} className="bg-white rounded-2xl border border-border p-4 mb-3">
+            <Text className="text-base font-bold text-ink">{u.name || u.nombre}</Text>
+            <Text className="text-xs text-muted mt-0.5">{u.email}</Text>
+            <Text className="text-[11px] font-bold text-primary mt-1">
+              {u.role || u.rol || 'RESTAURANTE'}
+            </Text>
           </View>
         ))
       )}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 32 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text },
-  newBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
-  newBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 10 },
-  btnPriText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
-  name: { fontSize: 16, fontWeight: '700', color: colors.text },
-  meta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  role: { fontSize: 11, fontWeight: '700', color: colors.primary, marginTop: 4 },
-});
