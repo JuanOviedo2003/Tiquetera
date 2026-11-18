@@ -154,3 +154,19 @@ backend/data/
 .agents
 
 *.json
+
+# Android build artifacts (React Native / native Android)
+# Build output directories
+android/app/build/
+**/build/
+# APK and AAB packages
+**/outputs/**/*.apk
+**/outputs/**/*.aab
+# Mapping files for ProGuard / R8
+**/outputs/mapping/**
+# Native libraries generated during build
+**/obj/
+# Gradle caches (optional, usually local)
+.gradle/
+# Keystore files (if stored in project)
+*.keystore
