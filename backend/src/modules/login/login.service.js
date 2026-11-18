@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import LoginEntity from "./login.entity.js";
+import UserEntity from "../user/entity/user.entity.js";
 
 export class LoginService {
   login(email, password) {
@@ -48,6 +49,17 @@ export class LoginService {
     }
 
     const { password: _p, passwordHash: _ph, ...userSinPassword } = user;
+
+    // Nombre del restaurante (titular de la cuenta) para personalizar mensajes al cliente
+    if (userSinPassword.restaurante_id) {
+      const titular = UserEntity.findMany({
+        role: "RESTAURANTE",
+        restaurante_id: userSinPassword.restaurante_id,
+        es_titular: true,
+      })[0];
+      userSinPassword.restaurante_nombre = titular ? titular.name : null;
+    }
+
     return userSinPassword;
   }
 }

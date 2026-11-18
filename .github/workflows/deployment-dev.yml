@@ -1,0 +1,38 @@
+name: Deploy to Server development
+
+on:
+  push:
+    branches:
+      - dev
+      - develop
+  workflow_dispatch:
+
+# dev y develop despliegan en la misma carpeta del servidor: se encolan para no solaparse
+concurrency:
+  group: deploy-dev-server
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executing remote SSH commands
+        uses: appleboy/ssh-action@v1.0.0
+        env:
+          BRANCH: ${{ github.ref_name }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          envs: BRANCH
+          script: |
+            cd ~/projects/electivaVNocturno/equipo-1/Tiquetera-dev
+            git fetch origin
+            git checkout "$BRANCH"
+            git pull origin "$BRANCH"
+            docker compose down
+            docker compose up --build -d
+            exit
