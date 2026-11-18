@@ -7,7 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { Mail, Lock, ArrowRight, KeyRound, QrCode } from 'lucide-react-native';
+import { Mail, Lock, ArrowRight, KeyRound, QrCode, Store } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import TiqueteraLogo from '../components/TiqueteraLogo';
 
@@ -19,6 +19,11 @@ export default function LoginScreen({
   const { login, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const handleQuickDemo = (demoEmail, demoPass) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+  };
 
   const handleSubmit = async () => {
     if (!email.trim() || !password) {
@@ -96,6 +101,39 @@ export default function LoginScreen({
             </>
           )}
         </TouchableOpacity>
+
+        {/* Cuentas de demostración disponibles */}
+        <View className="mt-5 pt-4 border-t border-border">
+          <View className="flex-row items-center gap-1.5 mb-2.5">
+            <KeyRound size={14} color="#FF6B47" />
+            <Text className="text-xs font-semibold text-slate-blue">
+              Cuentas de demostración disponibles:
+            </Text>
+          </View>
+          <View className="gap-2">
+            <TouchableOpacity
+              onPress={() => handleQuickDemo('admin@tiquetera.com', 'admin123')}
+              className="p-2.5 rounded-xl bg-bg border border-primary/35"
+            >
+              <Text className="text-xs font-bold text-primary">Superusuario</Text>
+              <Text className="text-[11px] text-slate-blue">admin@tiquetera.com</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleQuickDemo('prueba@gmail.com', '1234')}
+              className="p-2.5 rounded-xl bg-bg border border-border"
+            >
+              <Text className="text-xs font-bold text-ink">Restaurante Demo</Text>
+              <Text className="text-[11px] text-slate-blue">prueba@gmail.com</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleQuickDemo('cocina@tiquetera.com', 'cocina123')}
+              className="p-2.5 rounded-xl bg-bg border border-border"
+            >
+              <Text className="text-xs font-bold text-ink">Cocina & Servicio</Text>
+              <Text className="text-[11px] text-slate-blue">cocina@tiquetera.com</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       <View className="bg-white rounded-3xl border border-border p-5">
@@ -119,6 +157,13 @@ export default function LoginScreen({
             <Text className="text-ink font-semibold text-xs">Consultar QR</Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      <View className="mt-4 flex-row items-center justify-center gap-1.5">
+        <Store size={14} color="#64829E" />
+        <Text className="text-xs text-slate-blue font-medium">
+          Tiquetera — Control de almuerzos para restaurantes
+        </Text>
       </View>
     </ScrollView>
   );
