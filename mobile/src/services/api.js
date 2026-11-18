@@ -1,33 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_URL_STORAGE_KEY = 'tiquetera_mobile_api_url';
-const DEFAULT_API_URL =
-  process.env.EXPO_PUBLIC_API_URL || 'http://equipo-1-eleV-n-dev.apolobyte.online/api';
-
-let cachedApiUrl = DEFAULT_API_URL;
-
-export async function initApiBaseUrl() {
-  try {
-    const saved = await AsyncStorage.getItem(API_URL_STORAGE_KEY);
-    if (saved && saved.trim()) {
-      cachedApiUrl = saved.trim().replace(/\/+$/, '');
-    }
-  } catch {
-    // Usar default
-  }
-  return cachedApiUrl;
-}
-
-export function getApiBaseUrl() {
-  return cachedApiUrl;
-}
-
-export async function setApiBaseUrl(newUrl) {
-  const clean = (newUrl || '').trim().replace(/\/+$/, '') || DEFAULT_API_URL;
-  cachedApiUrl = clean;
-  await AsyncStorage.setItem(API_URL_STORAGE_KEY, clean);
-  return clean;
-}
+const API_BASE_URL =
+  (process.env.EXPO_PUBLIC_API_URL || 'http://equipo-1-eleV-n-dev.apolobyte.online/api').replace(/\/+$/, '');
 
 async function handleResponse(res) {
   const data = await res.json().catch(() => ({}));
@@ -42,17 +14,11 @@ async function handleResponse(res) {
 }
 
 async function request(path, options = {}) {
-  const baseUrl = getApiBaseUrl();
-  const res = await fetch(`${baseUrl}${path}`, options);
+  const res = await fetch(`${API_BASE_URL}${path}`, options);
   return handleResponse(res);
 }
 
 export const api = {
-  // Salud del backend
-  health: () => {
-    const base = getApiBaseUrl().replace(/\/api$/, '');
-    return fetch(`${base}/health`).then(handleResponse);
-  },
 
   // HU-R1: Inicio de Sesión
   login: (email, password) =>

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Ticket, Plus, X, Search, KeyRound, RefreshCw, ScanLine } from 'lucide-react-native';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -109,19 +110,23 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
   return (
     <ScrollView contentContainerClassName="p-4 pb-8" keyboardShouldPersistTaps="handled">
       <View className="flex-row justify-between items-center mb-3">
-        <Text className="text-xl font-extrabold text-ink">Tiqueteras</Text>
+        <View className="flex-row items-center gap-2">
+          <Ticket size={20} color="#FF6B47" />
+          <Text className="text-xl font-semibold text-ink">Tiqueteras</Text>
+        </View>
         <TouchableOpacity
           onPress={() => setShowCreate((v) => !v)}
-          className="bg-primary px-3.5 py-2 rounded-xl"
+          className="bg-primary px-3.5 py-2 rounded-xl flex-row items-center gap-1"
         >
+          {showCreate ? <X size={14} color="#FFF" /> : <Plus size={14} color="#FFF" />}
           <Text className="text-white font-bold text-xs">
-            {showCreate ? 'Cerrar' : '+ Nueva'}
+            {showCreate ? 'Cerrar' : 'Nueva'}
           </Text>
         </TouchableOpacity>
       </View>
 
       {showCreate && (
-        <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+        <View className="bg-white rounded-3xl border border-border p-4 mb-3">
           <Text className="text-base font-bold text-ink mb-2.5">Crear Tiquetera</Text>
           <Text className="text-xs font-semibold text-ink mb-1.5">Cliente</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2.5">
@@ -168,13 +173,17 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
         </View>
       )}
 
-      <View className="bg-white rounded-2xl border border-border p-4 mb-3">
-        <TextInput
-          value={busqueda}
-          onChangeText={setBusqueda}
-          placeholder="Buscar por nombre de cliente..."
-          className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
-        />
+      <View className="bg-white rounded-3xl border border-border p-4 mb-3">
+        <View className="flex-row items-center bg-bg border border-border rounded-xl px-3 mb-2.5">
+          <Search size={15} color="#64829E" />
+          <TextInput
+            value={busqueda}
+            onChangeText={setBusqueda}
+            placeholder="Buscar por nombre de cliente..."
+            placeholderTextColor="#64829E"
+            className="flex-1 py-2.5 pl-2 text-sm text-ink"
+          />
+        </View>
         <View className="flex-row flex-wrap gap-1.5">
           {['', 'PENDIENTE', 'ACTIVA', 'AGOTADA'].map((est) => {
             const active = filtroEstado === est;
@@ -198,10 +207,12 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
       {loading ? (
         <ActivityIndicator color="#FF6B47" className="mt-5" />
       ) : tiqueteras.length === 0 ? (
-        <Text className="text-center text-muted mt-6">No hay tiqueteras con estos filtros.</Text>
+        <Text className="text-center text-slate-blue mt-6">
+          No hay tiqueteras con estos filtros.
+        </Text>
       ) : (
         tiqueteras.map((t) => (
-          <View key={String(t.id)} className="bg-white rounded-2xl border border-border p-4 mb-3">
+          <View key={String(t.id)} className="bg-white rounded-3xl border border-border p-4 mb-3">
             <View className="flex-row justify-between items-center">
               <Text className="text-base font-bold text-ink">
                 {t.cliente?.nombre || t.cliente_nombre || `Cliente #${t.cliente_id}`}
@@ -210,7 +221,7 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
                 <Text className="text-primary text-[11px] font-bold">{t.estado}</Text>
               </View>
             </View>
-            <Text className="text-xs text-muted mt-1.5">
+            <Text className="text-xs text-slate-blue mt-1.5">
               Disponibles: <Text className="font-bold text-ink">{t.disponibles}</Text> /{' '}
               {t.total_almuerzos}
             </Text>
@@ -220,14 +231,16 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
                 <>
                   <TouchableOpacity
                     onPress={() => handleVerCodigo(t.id)}
-                    className="flex-1 bg-white border border-border rounded-xl py-2.5 items-center"
+                    className="flex-1 bg-bg border border-border rounded-xl py-2.5 flex-row items-center justify-center gap-1.5"
                   >
+                    <KeyRound size={13} color="#64829E" />
                     <Text className="text-ink font-semibold text-xs">Ver código</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => handleReemitir(t.id)}
-                    className="flex-1 bg-white border border-border rounded-xl py-2.5 items-center"
+                    className="flex-1 bg-bg border border-border rounded-xl py-2.5 flex-row items-center justify-center gap-1.5"
                   >
+                    <RefreshCw size={13} color="#64829E" />
                     <Text className="text-ink font-semibold text-xs">Reemitir</Text>
                   </TouchableOpacity>
                 </>
@@ -236,8 +249,9 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
               {t.estado === 'ACTIVA' && t.qr_token ? (
                 <TouchableOpacity
                   onPress={() => onAbrirConsumo(t.qr_token)}
-                  className="flex-1 bg-primary rounded-xl py-2.5 items-center"
+                  className="flex-1 bg-primary rounded-xl py-2.5 flex-row items-center justify-center gap-1.5"
                 >
+                  <ScanLine size={14} color="#FFFFFF" />
                   <Text className="text-white font-bold text-xs">Registrar consumo</Text>
                 </TouchableOpacity>
               ) : null}

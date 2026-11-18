@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { ArrowLeft, Camera, Search, KeyRound, QrCode } from 'lucide-react-native';
 import { api } from '../services/api';
 import { extractQrToken } from '../utils/qr';
 import QrScannerModal from '../components/QrScannerModal';
@@ -84,40 +85,49 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
       contentContainerClassName="flex-grow p-5 bg-bg"
       keyboardShouldPersistTaps="handled"
     >
-      <TouchableOpacity onPress={onBack} className="mb-3">
-        <Text className="text-primary font-bold text-sm">← Volver</Text>
+      <TouchableOpacity onPress={onBack} className="flex-row items-center gap-1.5 mb-3">
+        <ArrowLeft size={16} color="#FF6B47" />
+        <Text className="text-primary font-bold text-sm">Volver</Text>
       </TouchableOpacity>
 
-      <Text className="text-2xl font-extrabold text-ink">Mi Tiquetera</Text>
-      <Text className="text-xs text-muted mt-1 mb-4">
+      <View className="flex-row items-center gap-2">
+        <QrCode size={22} color="#FF6B47" />
+        <Text className="text-2xl font-semibold text-ink">Mi Tiquetera</Text>
+      </View>
+      <Text className="text-xs text-slate-blue mt-1 mb-4">
         Consulta tu saldo, QR e historial de almuerzos.
       </Text>
 
-      <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+      <View className="bg-white rounded-3xl border border-border p-4 mb-3">
         <Text className="text-xs font-semibold text-ink mb-1.5">Token o URL del QR</Text>
         <TextInput
           value={tokenInput}
           onChangeText={setTokenInput}
           placeholder="Pega el token QR o escanéalo"
+          placeholderTextColor="#64829E"
           autoCapitalize="none"
           className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
         />
         <View className="flex-row gap-2.5">
           <TouchableOpacity
             onPress={() => setScannerOpen(true)}
-            className="flex-1 bg-white border border-border rounded-xl py-3 items-center"
+            className="flex-1 bg-bg border border-border rounded-xl py-3 flex-row items-center justify-center gap-1.5"
           >
+            <Camera size={15} color="#333333" />
             <Text className="text-ink font-bold text-xs">Escanear QR</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => cargarTiquetera(tokenInput)}
             disabled={loading}
-            className="flex-1 bg-primary rounded-xl py-3 items-center"
+            className="flex-1 bg-primary rounded-xl py-3 flex-row items-center justify-center gap-1.5"
           >
             {loading ? (
               <ActivityIndicator color="#FFF" />
             ) : (
-              <Text className="text-white font-bold text-xs">Consultar</Text>
+              <>
+                <Search size={15} color="#FFFFFF" />
+                <Text className="text-white font-bold text-xs">Consultar</Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -125,8 +135,8 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
 
       {tiquetera && tiquetera.qr_token ? (
         <>
-          <View className="bg-white rounded-2xl border border-border p-4 mb-3 items-center">
-            <Text className="text-lg font-extrabold text-ink">
+          <View className="bg-white rounded-3xl border border-border p-5 mb-3 items-center">
+            <Text className="text-lg font-bold text-ink">
               {tiquetera.cliente?.nombre || tiquetera.cliente_nombre || 'Cliente'}
             </Text>
             <Text className="text-sm font-bold text-primary mt-1 mb-3.5">
@@ -137,8 +147,9 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
             </View>
             <TouchableOpacity
               onPress={() => setShowPinForm((v) => !v)}
-              className="w-full bg-white border border-border rounded-xl py-3 items-center mt-3"
+              className="w-full bg-bg border border-border rounded-xl py-3 flex-row items-center justify-center gap-1.5 mt-3.5"
             >
+              <KeyRound size={14} color="#64829E" />
               <Text className="text-ink font-bold text-xs">
                 {showPinForm ? 'Cancelar cambio de PIN' : 'Cambiar mi PIN'}
               </Text>
@@ -146,12 +157,13 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
           </View>
 
           {showPinForm && (
-            <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+            <View className="bg-white rounded-3xl border border-border p-4 mb-3">
               <Text className="text-base font-bold text-ink mb-2.5">Cambiar PIN</Text>
               <TextInput
                 value={pinAnterior}
                 onChangeText={setPinAnterior}
                 placeholder="PIN actual (6 dígitos)"
+                placeholderTextColor="#64829E"
                 keyboardType="number-pad"
                 secureTextEntry
                 maxLength={6}
@@ -161,6 +173,7 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
                 value={nuevoPin}
                 onChangeText={setNuevoPin}
                 placeholder="Nuevo PIN (6 dígitos)"
+                placeholderTextColor="#64829E"
                 keyboardType="number-pad"
                 secureTextEntry
                 maxLength={6}
@@ -180,12 +193,12 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
             </View>
           )}
 
-          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+          <View className="bg-white rounded-3xl border border-border p-4 mb-3">
             <Text className="text-base font-bold text-ink mb-2.5">Rejilla de almuerzos</Text>
             <RejillaGrid cuadros={rejilla} readOnly />
           </View>
 
-          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+          <View className="bg-white rounded-3xl border border-border p-4 mb-3">
             <Text className="text-base font-bold text-ink mb-2.5">Historial de movimientos</Text>
             <HistorialMovimientos movimientos={movimientos} />
           </View>

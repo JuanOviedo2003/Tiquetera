@@ -3,7 +3,9 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { Ticket, ScanLine, Users, UserCheck, LogOut, Store } from 'lucide-react-native';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import TiqueteraLogo from './src/components/TiqueteraLogo';
 import LoginScreen from './src/screens/LoginScreen';
 import ActivacionScreen from './src/screens/ActivacionScreen';
 import ClienteTiqueteraScreen from './src/screens/ClienteTiqueteraScreen';
@@ -12,13 +14,12 @@ import ConsumoScreen from './src/screens/ConsumoScreen';
 import ClientesScreen from './src/screens/ClientesScreen';
 import UsuariosScreen from './src/screens/UsuariosScreen';
 import SuperAdminScreen from './src/screens/SuperAdminScreen';
-import ServerConfigModal from './src/components/ServerConfigModal';
 
 const TABS = [
-  { key: 'tiqueteras', label: 'Tiqueteras' },
-  { key: 'consumo', label: 'Consumo' },
-  { key: 'clientes', label: 'Clientes' },
-  { key: 'usuarios', label: 'Usuarios' },
+  { key: 'tiqueteras', label: 'Tiqueteras', Icon: Ticket },
+  { key: 'consumo', label: 'Consumo', Icon: ScanLine },
+  { key: 'clientes', label: 'Clientes', Icon: Users },
+  { key: 'usuarios', label: 'Equipo', Icon: UserCheck },
 ];
 
 function MainApp() {
@@ -26,7 +27,6 @@ function MainApp() {
   const [publicRoute, setPublicRoute] = useState(null);
   const [activeTab, setActiveTab] = useState('tiqueteras');
   const [qrParaConsumo, setQrParaConsumo] = useState(null);
-  const [serverModalOpen, setServerModalOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = useCallback((t) => {
@@ -43,6 +43,9 @@ function MainApp() {
       </View>
     );
   }
+
+  const userName = user?.nombre || user?.name || user?.email || 'Restaurante';
+  const userInitial = userName.charAt(0).toUpperCase();
 
   let content = null;
 
@@ -67,7 +70,6 @@ function MainApp() {
       <LoginScreen
         onGoClienteActivar={() => setPublicRoute({ mode: 'activar' })}
         onGoClienteConsulta={() => setPublicRoute({ mode: 'consulta', qrToken: '' })}
-        onOpenServerConfig={() => setServerModalOpen(true)}
         onShowToast={showToast}
       />
     );
@@ -76,23 +78,43 @@ function MainApp() {
   } else {
     content = (
       <View className="flex-1">
+        {/* Top Header Bar */}
         <View className="flex-row justify-between items-center px-4 py-3 bg-white border-b border-border">
-          <View>
-            <Text className="text-lg font-extrabold text-ink">Tiquetera</Text>
-            <Text className="text-[11px] text-muted">{user?.name || user?.email}</Text>
+          <View className="flex-row items-center gap-2.5 flex-1">
+            <TiqueteraLogo size={38} />
+            <View>
+              <Text className="text-lg font-semibold text-ink">Tiquetera</Text>
+              <View className="flex-row items-center gap-1">
+                <Store size={12} color="#64829E" />
+                <Text className="text-[11px] text-slate-blue font-medium">
+                  Control de Restaurante
+                </Text>
+              </View>
+            </View>
           </View>
-          <View className="flex-row gap-2">
-            <TouchableOpacity
-              onPress={() => setServerModalOpen(true)}
-              className="px-2.5 py-1.5 rounded-lg bg-bg border border-border"
-            >
-              <Text className="text-xs font-bold text-ink">API</Text>
-            </TouchableOpacity>
+
+          <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center gap-2 bg-bg px-2.5 py-1.5 rounded-xl border border-border">
+              <View className="w-6 h-6 rounded-lg bg-slate-blue/15 items-center justify-center">
+                <Text className="text-xs font-bold text-slate-blue">{userInitial}</Text>
+              </View>
+              <View className="max-w-[80px]">
+                <Text className="text-[11px] font-semibold text-ink" numberOfLines={1}>
+                  {userName}
+                </Text>
+                <View className="flex-row items-center gap-1">
+                  <View className="w-1.5 h-1.5 rounded-full bg-slate-blue" />
+                  <Text className="text-[9px] text-slate-blue font-medium">Activo</Text>
+                </View>
+              </View>
+            </View>
+
             <TouchableOpacity
               onPress={logout}
-              className="px-2.5 py-1.5 rounded-lg bg-bg border border-border"
+              className="p-2.5 rounded-xl bg-bg border border-border"
+              accessibilityLabel="Cerrar sesión"
             >
-              <Text className="text-xs font-bold text-red-600">Salir</Text>
+              <LogOut size={16} color="#333333" />
             </TouchableOpacity>
           </View>
         </View>
@@ -118,23 +140,27 @@ function MainApp() {
           {activeTab === 'usuarios' && <UsuariosScreen onShowToast={showToast} />}
         </View>
 
-        <View className="flex-row bg-white border-t border-border p-2 gap-1.5">
-          {TABS.map((t) => {
-            const active = activeTab === t.key;
+        {/* Bottom Navigation Dock */}
+        <View className="flex-row bg-white border-t border-border px-2 py-1.5">
+          {TABS.map(({ key, label, Icon }) => {
+            const active = activeTab === key;
             return (
               <TouchableOpacity
-                key={t.key}
-                onPress={() => setActiveTab(t.key)}
-                className={`flex-1 py-2.5 rounded-xl items-center ${
-                  active ? 'bg-primary-light' : ''
-                }`}
+                key={key}
+                onPress={() => setActiveTab(key)}
+                className="flex-1 items-center justify-center py-1.5"
               >
+                <View
+                  className={`p-1.5 rounded-xl ${active ? 'bg-primary/15' : ''}`}
+                >
+                  <Icon size={20} color={active ? '#FF6B47' : '#64829E'} />
+                </View>
                 <Text
-                  className={`text-xs ${
-                    active ? 'text-primary font-extrabold' : 'text-muted font-semibold'
+                  className={`text-[11px] mt-0.5 ${
+                    active ? 'text-primary font-bold' : 'text-slate-blue font-medium'
                   }`}
                 >
-                  {t.label}
+                  {label}
                 </Text>
               </TouchableOpacity>
             );
@@ -152,18 +178,12 @@ function MainApp() {
       {toast && (
         <View
           className={`absolute top-14 left-4 right-4 p-3.5 rounded-xl shadow-md ${
-            toast.type === 'error' ? 'bg-red-600' : 'bg-green-600'
+            toast.type === 'error' ? 'bg-primary' : 'bg-slate-blue'
           }`}
         >
           <Text className="text-white font-bold text-center text-xs">{toast.message}</Text>
         </View>
       )}
-
-      <ServerConfigModal
-        visible={serverModalOpen}
-        onClose={() => setServerModalOpen(false)}
-        onSaved={(url) => showToast({ type: 'success', message: `API: ${url}` })}
-      />
     </SafeAreaView>
   );
 }

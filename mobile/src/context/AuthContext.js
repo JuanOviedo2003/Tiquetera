@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api, initApiBaseUrl } from '../services/api';
+import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = 'tiquetera_auth_user';
@@ -12,7 +12,6 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     (async () => {
-      await initApiBaseUrl();
       try {
         const saved = await AsyncStorage.getItem(STORAGE_KEY);
         if (saved) setUser(JSON.parse(saved));

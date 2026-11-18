@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { UserCheck, Plus, X } from 'lucide-react-native';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -66,19 +67,23 @@ export default function UsuariosScreen({ onShowToast }) {
   return (
     <ScrollView contentContainerClassName="p-4 pb-8" keyboardShouldPersistTaps="handled">
       <View className="flex-row justify-between items-center mb-3">
-        <Text className="text-xl font-extrabold text-ink">Usuarios</Text>
+        <View className="flex-row items-center gap-2">
+          <UserCheck size={20} color="#FF6B47" />
+          <Text className="text-xl font-semibold text-ink">Equipo</Text>
+        </View>
         <TouchableOpacity
           onPress={() => setShowCreate((v) => !v)}
-          className="bg-primary px-3.5 py-2 rounded-xl"
+          className="bg-primary px-3.5 py-2 rounded-xl flex-row items-center gap-1"
         >
+          {showCreate ? <X size={14} color="#FFF" /> : <Plus size={14} color="#FFF" />}
           <Text className="text-white font-bold text-xs">
-            {showCreate ? 'Cerrar' : '+ Nuevo'}
+            {showCreate ? 'Cerrar' : 'Nuevo'}
           </Text>
         </TouchableOpacity>
       </View>
 
       {showCreate && (
-        <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+        <View className="bg-white rounded-3xl border border-border p-4 mb-3">
           <Text className="text-base font-bold text-ink mb-2.5">
             Nuevo usuario del restaurante
           </Text>
@@ -86,12 +91,14 @@ export default function UsuariosScreen({ onShowToast }) {
             value={name}
             onChangeText={setName}
             placeholder="Nombre"
+            placeholderTextColor="#64829E"
             className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
           />
           <TextInput
             value={email}
             onChangeText={setEmail}
             placeholder="Correo electrónico"
+            placeholderTextColor="#64829E"
             keyboardType="email-address"
             autoCapitalize="none"
             className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
@@ -100,6 +107,7 @@ export default function UsuariosScreen({ onShowToast }) {
             value={password}
             onChangeText={setPassword}
             placeholder="Contraseña"
+            placeholderTextColor="#64829E"
             secureTextEntry
             className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-3"
           />
@@ -121,9 +129,9 @@ export default function UsuariosScreen({ onShowToast }) {
         <ActivityIndicator color="#FF6B47" className="mt-5" />
       ) : (
         users.map((u) => (
-          <View key={String(u.id)} className="bg-white rounded-2xl border border-border p-4 mb-3">
+          <View key={String(u.id)} className="bg-white rounded-3xl border border-border p-4 mb-3">
             <Text className="text-base font-bold text-ink">{u.name || u.nombre}</Text>
-            <Text className="text-xs text-muted mt-0.5">{u.email}</Text>
+            <Text className="text-xs text-slate-blue mt-0.5">{u.email}</Text>
             <Text className="text-[11px] font-bold text-primary mt-1">
               {u.role || u.rol || 'RESTAURANTE'}
             </Text>

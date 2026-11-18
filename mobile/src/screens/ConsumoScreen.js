@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { ScanLine, Camera, Search, ShieldCheck, Lock } from 'lucide-react-native';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { extractQrToken } from '../utils/qr';
@@ -158,9 +159,12 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
 
   return (
     <ScrollView contentContainerClassName="p-4 pb-8" keyboardShouldPersistTaps="handled">
-      <Text className="text-xl font-extrabold text-ink mb-3">Consumo por QR</Text>
+      <View className="flex-row items-center gap-2 mb-3">
+        <ScanLine size={20} color="#FF6B47" />
+        <Text className="text-xl font-semibold text-ink">Consumo por QR</Text>
+      </View>
 
-      <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+      <View className="bg-white rounded-3xl border border-border p-4 mb-3">
         <Text className="text-xs font-semibold text-ink mb-1.5">
           Escanear o ingresar token QR
         </Text>
@@ -168,14 +172,16 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
           value={tokenInput}
           onChangeText={setTokenInput}
           placeholder="Token QR del cliente"
+          placeholderTextColor="#64829E"
           autoCapitalize="none"
           className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
         />
         <View className="flex-row gap-2.5">
           <TouchableOpacity
             onPress={() => setScannerOpen(true)}
-            className="flex-1 bg-white border border-border rounded-xl py-3 items-center"
+            className="flex-1 bg-bg border border-border rounded-xl py-3 flex-row items-center justify-center gap-1.5"
           >
+            <Camera size={15} color="#333333" />
             <Text className="text-ink font-bold text-xs">Abrir Cámara</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -185,12 +191,15 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
               cargarTodo(tokenInput);
             }}
             disabled={loading}
-            className="flex-1 bg-primary rounded-xl py-3 items-center"
+            className="flex-1 bg-primary rounded-xl py-3 flex-row items-center justify-center gap-1.5"
           >
             {loading ? (
               <ActivityIndicator color="#FFF" />
             ) : (
-              <Text className="text-white font-bold text-xs">Buscar</Text>
+              <>
+                <Search size={15} color="#FFFFFF" />
+                <Text className="text-white font-bold text-xs">Buscar</Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -198,11 +207,11 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
 
       {tiquetera ? (
         <>
-          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
-            <Text className="text-base font-extrabold text-ink">
+          <View className="bg-white rounded-3xl border border-border p-4 mb-3">
+            <Text className="text-base font-bold text-ink">
               {tiquetera.cliente?.nombre || tiquetera.cliente_nombre || 'Cliente'}
             </Text>
-            <Text className="text-xs text-muted mt-1">
+            <Text className="text-xs text-slate-blue mt-1">
               Disponibles: {tiquetera.disponibles} / {tiquetera.total_almuerzos} · Estado:{' '}
               {tiquetera.estado}
             </Text>
@@ -213,15 +222,19 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
                   PIN del cliente (6 dígitos)
                 </Text>
                 <View className="flex-row gap-2.5">
-                  <TextInput
-                    value={pin}
-                    onChangeText={setPin}
-                    keyboardType="number-pad"
-                    secureTextEntry
-                    maxLength={6}
-                    placeholder="••••••"
-                    className="flex-1 bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink"
-                  />
+                  <View className="flex-1 flex-row items-center bg-bg border border-border rounded-xl px-3">
+                    <Lock size={15} color="#64829E" />
+                    <TextInput
+                      value={pin}
+                      onChangeText={setPin}
+                      keyboardType="number-pad"
+                      secureTextEntry
+                      maxLength={6}
+                      placeholder="••••••"
+                      placeholderTextColor="#64829E"
+                      className="flex-1 py-2.5 pl-2 text-sm text-ink"
+                    />
+                  </View>
                   <TouchableOpacity
                     onPress={handleValidarPin}
                     disabled={validatingPin}
@@ -236,13 +249,16 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
                 </View>
               </View>
             ) : (
-              <Text className="mt-2.5 text-green-600 font-bold text-xs">
-                ✓ PIN verificado. Selecciona los cuadros a descontar.
-              </Text>
+              <View className="flex-row items-center gap-1.5 mt-2.5">
+                <ShieldCheck size={15} color="#64829E" />
+                <Text className="text-slate-blue font-bold text-xs">
+                  PIN verificado. Selecciona los cuadros a descontar.
+                </Text>
+              </View>
             )}
           </View>
 
-          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+          <View className="bg-white rounded-3xl border border-border p-4 mb-3">
             <Text className="text-base font-bold text-ink mb-2.5">Rejilla de almuerzos</Text>
             <RejillaGrid
               cuadros={rejilla}
@@ -255,8 +271,9 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
               <TouchableOpacity
                 onPress={handleRegistrarConsumo}
                 disabled={submitting || !selectedCuadros.length}
-                className={`rounded-xl py-3.5 items-center mt-3.5 ${selectedCuadros.length ? 'bg-primary' : 'bg-primary/50'
-                  }`}
+                className={`rounded-xl py-3.5 items-center mt-3.5 ${
+                  selectedCuadros.length ? 'bg-primary' : 'bg-primary/50'
+                }`}
               >
                 {submitting ? (
                   <ActivityIndicator color="#FFF" />
@@ -269,7 +286,7 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
             )}
           </View>
 
-          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+          <View className="bg-white rounded-3xl border border-border p-4 mb-3">
             <Text className="text-base font-bold text-ink mb-2.5">Historial de movimientos</Text>
             <HistorialMovimientos movimientos={movimientos} />
           </View>
