@@ -5,12 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { api } from '../services/api';
-import { colors, commonStyles } from '../theme/colors';
 
 export default function ActivacionScreen({ onBack, onOpenTiquetera, onShowToast }) {
   const [codigo, setCodigo] = useState('');
@@ -48,29 +46,34 @@ export default function ActivacionScreen({ onBack, onOpenTiquetera, onShowToast 
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-        <Text style={styles.backText}>← Volver</Text>
+    <ScrollView
+      contentContainerClassName="flex-grow p-5 bg-bg"
+      keyboardShouldPersistTaps="handled"
+    >
+      <TouchableOpacity onPress={onBack} className="mb-3">
+        <Text className="text-primary font-bold text-sm">← Volver</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Activar Tiquetera</Text>
-      <Text style={styles.subtitle}>
+      <Text className="text-2xl font-extrabold text-ink">Activar Tiquetera</Text>
+      <Text className="text-xs text-muted mt-1 mb-4">
         Ingresa el código de 6 dígitos que te dio el restaurante y crea tu PIN personal.
       </Text>
 
       {!activated ? (
-        <View style={commonStyles.card}>
-          <Text style={styles.label}>Código de activación (6 dígitos)</Text>
+        <View className="bg-white rounded-2xl border border-border p-4">
+          <Text className="text-xs font-semibold text-ink mb-1.5">
+            Código de activación (6 dígitos)
+          </Text>
           <TextInput
             value={codigo}
             onChangeText={setCodigo}
             keyboardType="number-pad"
             maxLength={6}
             placeholder="123456"
-            style={[commonStyles.input, styles.codeInput]}
+            className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-lg font-bold text-center tracking-widest text-ink mb-3"
           />
 
-          <Text style={styles.label}>Nuevo PIN (6 dígitos)</Text>
+          <Text className="text-xs font-semibold text-ink mb-1.5">Nuevo PIN (6 dígitos)</Text>
           <TextInput
             value={pin}
             onChangeText={setPin}
@@ -78,10 +81,10 @@ export default function ActivacionScreen({ onBack, onOpenTiquetera, onShowToast 
             secureTextEntry
             maxLength={6}
             placeholder="••••••"
-            style={[commonStyles.input, { marginBottom: 12 }]}
+            className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-3"
           />
 
-          <Text style={styles.label}>Confirmar PIN</Text>
+          <Text className="text-xs font-semibold text-ink mb-1.5">Confirmar PIN</Text>
           <TextInput
             value={confirmPin}
             onChangeText={setConfirmPin}
@@ -89,54 +92,39 @@ export default function ActivacionScreen({ onBack, onOpenTiquetera, onShowToast 
             secureTextEntry
             maxLength={6}
             placeholder="••••••"
-            style={[commonStyles.input, { marginBottom: 16 }]}
+            className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-4"
           />
 
           <TouchableOpacity
-            style={commonStyles.buttonPrimary}
             onPress={handleActivar}
             disabled={loading}
+            className="bg-primary rounded-xl py-3.5 items-center"
           >
             {loading ? (
               <ActivityIndicator color="#FFF" />
             ) : (
-              <Text style={styles.btnPrimaryText}>Activar y generar QR</Text>
+              <Text className="text-white font-bold text-sm">Activar y generar QR</Text>
             )}
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={[commonStyles.card, { alignItems: 'center' }]}>
-          <Text style={styles.successTitle}>¡Tiquetera Activa!</Text>
-          <Text style={styles.info}>
+        <View className="bg-white rounded-2xl border border-border p-5 items-center">
+          <Text className="text-xl font-extrabold text-green-600 mb-1.5">¡Tiquetera Activa!</Text>
+          <Text className="text-sm text-ink mb-4">
             Almuerzos disponibles: {activated.disponibles ?? activated.total_almuerzos}
           </Text>
-          <View style={styles.qrBox}>
+          <View className="p-3.5 bg-white rounded-2xl border border-border">
             <QRCode value={activated.qr_token || ''} size={180} />
           </View>
-          <Text style={styles.tokenText}>Token: {activated.qr_token}</Text>
+          <Text className="text-[11px] text-muted mt-2.5">Token: {activated.qr_token}</Text>
           <TouchableOpacity
-            style={[commonStyles.buttonPrimary, { width: '100%', marginTop: 14 }]}
             onPress={() => onOpenTiquetera(activated.qr_token)}
+            className="w-full bg-primary rounded-xl py-3.5 items-center mt-4"
           >
-            <Text style={styles.btnPrimaryText}>Ver mi saldo e historial</Text>
+            <Text className="text-white font-bold text-sm">Ver mi saldo e historial</Text>
           </TouchableOpacity>
         </View>
       )}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, backgroundColor: colors.bg },
-  backBtn: { marginBottom: 12 },
-  backText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
-  title: { fontSize: 24, fontWeight: '800', color: colors.text },
-  subtitle: { fontSize: 13, color: colors.textMuted, marginBottom: 18, marginTop: 4 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
-  codeInput: { marginBottom: 12, fontSize: 18, letterSpacing: 4, textAlign: 'center', fontWeight: '700' },
-  btnPrimaryText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
-  successTitle: { fontSize: 20, fontWeight: '800', color: colors.success, marginBottom: 6 },
-  info: { fontSize: 14, color: colors.text, marginBottom: 16 },
-  qrBox: { padding: 14, backgroundColor: '#FFF', borderRadius: 14, borderWidth: 1, borderColor: colors.border },
-  tokenText: { fontSize: 11, color: colors.textMuted, marginTop: 10 },
-});

@@ -5,13 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { colors, commonStyles } from '../theme/colors';
 import { extractQrToken } from '../utils/qr';
 import QrScannerModal from '../components/QrScannerModal';
 import RejillaGrid from '../components/RejillaGrid';
@@ -27,41 +25,42 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
   const [rejilla, setRejilla] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
 
-  // PIN del cliente
   const [pin, setPin] = useState('');
   const [pinValidado, setPinValidado] = useState(false);
   const [validatingPin, setValidatingPin] = useState(false);
 
-  // Selección de cuadros
   const [selectedCuadros, setSelectedCuadros] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
-  const cargarTodo = useCallback(async (rawToken) => {
-    const clean = extractQrToken(rawToken);
-    if (!clean) {
-      onShowToast?.({ type: 'error', message: 'Ingresa o escanea un QR válido' });
-      return;
-    }
-    setLoading(true);
-    try {
-      const tiqRes = await api.getTiqueteraByQr(clean);
-      const tiq = tiqRes.tiquetera || tiqRes;
-      setTiquetera(tiq);
-      setTokenInput(clean);
-      setSelectedCuadros([]);
+  const cargarTodo = useCallback(
+    async (rawToken) => {
+      const clean = extractQrToken(rawToken);
+      if (!clean) {
+        onShowToast?.({ type: 'error', message: 'Ingresa o escanea un QR válido' });
+        return;
+      }
+      setLoading(true);
+      try {
+        const tiqRes = await api.getTiqueteraByQr(clean);
+        const tiq = tiqRes.tiquetera || tiqRes;
+        setTiquetera(tiq);
+        setTokenInput(clean);
+        setSelectedCuadros([]);
 
-      const [rejRes, histRes] = await Promise.all([
-        api.getRejilla(clean),
-        api.getHistorial(tiq.id),
-      ]);
-      setRejilla(rejRes.cuadros || rejRes.rejilla || rejRes || []);
-      setMovimientos(histRes.movimientos || histRes.historial || histRes || []);
-    } catch (err) {
-      onShowToast?.({ type: 'error', message: err.message || 'Error al cargar tiquetera' });
-    } finally {
-      setLoading(false);
-    }
-  }, [onShowToast]);
+        const [rejRes, histRes] = await Promise.all([
+          api.getRejilla(clean),
+          api.getHistorial(tiq.id),
+        ]);
+        setRejilla(rejRes.cuadros || rejRes.rejilla || rejRes || []);
+        setMovimientos(histRes.movimientos || histRes.historial || histRes || []);
+      } catch (err) {
+        onShowToast?.({ type: 'error', message: err.message || 'Error al cargar tiquetera' });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [onShowToast]
+  );
 
   useEffect(() => {
     if (initialQrToken) {
@@ -158,53 +157,62 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Consumo por QR</Text>
+    <ScrollView contentContainerClassName="p-4 pb-8" keyboardShouldPersistTaps="handled">
+      <Text className="text-xl font-extrabold text-ink mb-3">Consumo por QR</Text>
 
-      <View style={commonStyles.card}>
-        <Text style={styles.label}>Escanear o ingresar token QR</Text>
+      <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+        <Text className="text-xs font-semibold text-ink mb-1.5">
+          Escanear o ingresar token QR
+        </Text>
         <TextInput
           value={tokenInput}
           onChangeText={setTokenInput}
           placeholder="Token QR del cliente"
           autoCapitalize="none"
-          style={[commonStyles.input, { marginBottom: 10 }]}
+          className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
         />
-        <View style={styles.row}>
+        <View className="flex-row gap-2.5">
           <TouchableOpacity
-            style={[commonStyles.buttonSecondary, { flex: 1 }]}
             onPress={() => setScannerOpen(true)}
+            className="flex-1 bg-white border border-border rounded-xl py-3 items-center"
           >
-            <Text style={styles.btnSecText}>Abrir Cámara</Text>
+            <Text className="text-ink font-bold text-xs">Abrir Cámara</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[commonStyles.buttonPrimary, { flex: 1 }]}
             onPress={() => {
               setPinValidado(false);
               setPin('');
               cargarTodo(tokenInput);
             }}
             disabled={loading}
+            className="flex-1 bg-primary rounded-xl py-3 items-center"
           >
-            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnPriText}>Buscar</Text>}
+            {loading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text className="text-white font-bold text-xs">Buscar</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
       {tiquetera ? (
         <>
-          <View style={commonStyles.card}>
-            <Text style={styles.clientName}>
+          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+            <Text className="text-base font-extrabold text-ink">
               {tiquetera.cliente?.nombre || tiquetera.cliente_nombre || 'Cliente'}
             </Text>
-            <Text style={styles.balance}>
-              Disponibles: {tiquetera.disponibles} / {tiquetera.total_almuerzos} · Estado: {tiquetera.estado}
+            <Text className="text-xs text-muted mt-1">
+              Disponibles: {tiquetera.disponibles} / {tiquetera.total_almuerzos} · Estado:{' '}
+              {tiquetera.estado}
             </Text>
 
             {!pinValidado ? (
-              <View style={{ marginTop: 12 }}>
-                <Text style={styles.label}>PIN del cliente (6 dígitos)</Text>
-                <View style={styles.row}>
+              <View className="mt-3">
+                <Text className="text-xs font-semibold text-ink mb-1.5">
+                  PIN del cliente (6 dígitos)
+                </Text>
+                <View className="flex-row gap-2.5">
                   <TextInput
                     value={pin}
                     onChangeText={setPin}
@@ -212,28 +220,30 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
                     secureTextEntry
                     maxLength={6}
                     placeholder="••••••"
-                    style={[commonStyles.input, { flex: 1 }]}
+                    className="flex-1 bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink"
                   />
                   <TouchableOpacity
-                    style={[commonStyles.buttonPrimary, { paddingHorizontal: 18 }]}
                     onPress={handleValidarPin}
                     disabled={validatingPin}
+                    className="bg-primary rounded-xl px-4 justify-center items-center"
                   >
                     {validatingPin ? (
                       <ActivityIndicator color="#FFF" />
                     ) : (
-                      <Text style={styles.btnPriText}>Validar</Text>
+                      <Text className="text-white font-bold text-xs">Validar</Text>
                     )}
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
-              <Text style={styles.pinOk}>✓ PIN verificado. Selecciona los cuadros a descontar.</Text>
+              <Text className="mt-2.5 text-green-600 font-bold text-xs">
+                ✓ PIN verificado. Selecciona los cuadros a descontar.
+              </Text>
             )}
           </View>
 
-          <View style={commonStyles.card}>
-            <Text style={styles.sectionTitle}>Rejilla de almuerzos</Text>
+          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+            <Text className="text-base font-bold text-ink mb-2.5">Rejilla de almuerzos</Text>
             <RejillaGrid
               cuadros={rejilla}
               selected={selectedCuadros}
@@ -243,14 +253,15 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
             />
             {pinValidado && (
               <TouchableOpacity
-                style={[commonStyles.buttonPrimary, { marginTop: 14 }]}
                 onPress={handleRegistrarConsumo}
                 disabled={submitting || !selectedCuadros.length}
+                className={`rounded-xl py-3.5 items-center mt-3.5 ${selectedCuadros.length ? 'bg-primary' : 'bg-primary/50'
+                  }`}
               >
                 {submitting ? (
                   <ActivityIndicator color="#FFF" />
                 ) : (
-                  <Text style={styles.btnPriText}>
+                  <Text className="text-white font-bold text-xs">
                     Descontar ({selectedCuadros.length}) almuerzo(s)
                   </Text>
                 )}
@@ -258,8 +269,8 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
             )}
           </View>
 
-          <View style={commonStyles.card}>
-            <Text style={styles.sectionTitle}>Historial de movimientos</Text>
+          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+            <Text className="text-base font-bold text-ink mb-2.5">Historial de movimientos</Text>
             <HistorialMovimientos movimientos={movimientos} />
           </View>
         </>
@@ -277,16 +288,3 @@ export default function ConsumoScreen({ initialQrToken = '', onClearInitialQr, o
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text, marginBottom: 12 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
-  row: { flexDirection: 'row', gap: 10 },
-  btnSecText: { color: colors.text, fontWeight: '700', fontSize: 13 },
-  btnPriText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
-  clientName: { fontSize: 17, fontWeight: '800', color: colors.text },
-  balance: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
-  pinOk: { marginTop: 10, color: colors.success, fontWeight: '700', fontSize: 13 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 10 },
-});

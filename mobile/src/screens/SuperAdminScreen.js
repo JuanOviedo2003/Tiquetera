@@ -5,13 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { colors, commonStyles } from '../theme/colors';
 
 export default function SuperAdminScreen({ onShowToast }) {
   const { logout } = useAuth();
@@ -20,7 +18,6 @@ export default function SuperAdminScreen({ onShowToast }) {
   const [pines, setPines] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Crear restaurante
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -107,52 +104,62 @@ export default function SuperAdminScreen({ onShowToast }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={styles.topBar}>
-        <Text style={styles.topTitle}>SuperAdmin</Text>
-        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Salir</Text>
+    <View className="flex-1 bg-bg">
+      <View className="flex-row justify-between items-center px-4 py-3.5 bg-white border-b border-border">
+        <Text className="text-lg font-extrabold text-ink">SuperAdmin</Text>
+        <TouchableOpacity onPress={logout} className="px-3 py-1.5 rounded-lg bg-bg">
+          <Text className="text-red-600 font-bold text-xs">Salir</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.tabRow}>
+      <View className="flex-row p-3 gap-2">
         <TouchableOpacity
-          style={[styles.tabBtn, tab === 'restaurantes' && styles.tabActive]}
           onPress={() => setTab('restaurantes')}
+          className={`flex-1 py-2.5 rounded-xl border items-center ${
+            tab === 'restaurantes' ? 'bg-primary border-primary' : 'bg-white border-border'
+          }`}
         >
-          <Text style={[styles.tabText, tab === 'restaurantes' && styles.tabTextActive]}>
+          <Text
+            className={`font-bold text-xs ${
+              tab === 'restaurantes' ? 'text-white' : 'text-ink'
+            }`}
+          >
             Restaurantes
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabBtn, tab === 'pines' && styles.tabActive]}
           onPress={() => setTab('pines')}
+          className={`flex-1 py-2.5 rounded-xl border items-center ${
+            tab === 'pines' ? 'bg-primary border-primary' : 'bg-white border-border'
+          }`}
         >
-          <Text style={[styles.tabText, tab === 'pines' && styles.tabTextActive]}>
+          <Text
+            className={`font-bold text-xs ${tab === 'pines' ? 'text-white' : 'text-ink'}`}
+          >
             Tiqueteras / PINes
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerClassName="p-4 pb-8">
         {tab === 'restaurantes' ? (
           <>
             <TouchableOpacity
-              style={[commonStyles.buttonPrimary, { marginBottom: 12 }]}
               onPress={() => setShowCreate((v) => !v)}
+              className="bg-primary rounded-xl py-3 items-center mb-3"
             >
-              <Text style={styles.btnPriText}>
+              <Text className="text-white font-bold text-xs">
                 {showCreate ? 'Cancelar' : '+ Nuevo Restaurante'}
               </Text>
             </TouchableOpacity>
 
             {showCreate && (
-              <View style={commonStyles.card}>
+              <View className="bg-white rounded-2xl border border-border p-4 mb-3">
                 <TextInput
                   value={name}
                   onChangeText={setName}
                   placeholder="Nombre del restaurante"
-                  style={[commonStyles.input, { marginBottom: 10 }]}
+                  className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
                 />
                 <TextInput
                   value={email}
@@ -160,80 +167,82 @@ export default function SuperAdminScreen({ onShowToast }) {
                   placeholder="Correo admin"
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  style={[commonStyles.input, { marginBottom: 10 }]}
+                  className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
                 />
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Contraseña"
                   secureTextEntry
-                  style={[commonStyles.input, { marginBottom: 10 }]}
+                  className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
                 />
                 <TextInput
                   value={precio}
                   onChangeText={setPrecio}
                   placeholder="Precio tiquetera"
                   keyboardType="numeric"
-                  style={[commonStyles.input, { marginBottom: 12 }]}
+                  className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-3"
                 />
                 <TouchableOpacity
-                  style={commonStyles.buttonPrimary}
                   onPress={handleCrearRestaurante}
                   disabled={saving}
+                  className="bg-primary rounded-xl py-3 items-center"
                 >
                   {saving ? (
                     <ActivityIndicator color="#FFF" />
                   ) : (
-                    <Text style={styles.btnPriText}>Guardar Restaurante</Text>
+                    <Text className="text-white font-bold text-xs">Guardar Restaurante</Text>
                   )}
                 </TouchableOpacity>
               </View>
             )}
 
             {loading ? (
-              <ActivityIndicator color={colors.primary} />
+              <ActivityIndicator color="#FF6B47" />
             ) : (
               restaurantes.map((r) => (
-                <View key={String(r.id)} style={commonStyles.card}>
-                  <Text style={styles.name}>{r.name || r.nombre}</Text>
-                  <Text style={styles.meta}>{r.email}</Text>
-                  <Text style={styles.meta}>ID: {r.restaurante_id || r.id}</Text>
+                <View key={String(r.id)} className="bg-white rounded-2xl border border-border p-4 mb-3">
+                  <Text className="text-base font-bold text-ink">{r.name || r.nombre}</Text>
+                  <Text className="text-xs text-muted mt-0.5">{r.email}</Text>
+                  <Text className="text-xs text-muted mt-0.5">
+                    ID: {r.restaurante_id || r.id}
+                  </Text>
                   <TouchableOpacity
-                    style={[commonStyles.buttonSecondary, { marginTop: 10 }]}
                     onPress={() => handleDeleteRestaurante(r.id, r.name || r.nombre)}
+                    className="bg-white border border-border rounded-xl py-2.5 items-center mt-2.5"
                   >
-                    <Text style={{ color: colors.danger, fontWeight: '700' }}>Eliminar</Text>
+                    <Text className="text-red-600 font-bold text-xs">Eliminar</Text>
                   </TouchableOpacity>
                 </View>
               ))
             )}
           </>
         ) : loading ? (
-          <ActivityIndicator color={colors.primary} />
+          <ActivityIndicator color="#FF6B47" />
         ) : (
           pines.map((t) => (
-            <View key={String(t.id)} style={commonStyles.card}>
-              <Text style={styles.name}>
+            <View key={String(t.id)} className="bg-white rounded-2xl border border-border p-4 mb-3">
+              <Text className="text-base font-bold text-ink">
                 {t.cliente_nombre || t.cliente?.nombre || `Tiquetera #${t.id}`}
               </Text>
-              <Text style={styles.meta}>
+              <Text className="text-xs text-muted mt-0.5">
                 Estado: {t.estado} · Restaurante: {t.restaurante_id}
               </Text>
-              <Text style={styles.meta}>
+              <Text className="text-xs text-muted mt-0.5">
                 Disponibles: {t.disponibles}/{t.total_almuerzos}
               </Text>
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <View className="flex-row gap-2 mt-2.5">
                 <TouchableOpacity
-                  style={[commonStyles.buttonSecondary, { flex: 1 }]}
                   onPress={() => handleCambiarEstado(t.id, 'ACTIVA')}
+                  className="flex-1 bg-white border border-border rounded-xl py-2.5 items-center"
                 >
-                  <Text style={styles.btnSecText}>Activar</Text>
+                  <Text className="text-ink font-semibold text-xs">Activar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[commonStyles.buttonSecondary, { flex: 1 }]}
                   onPress={() => handleCambiarEstado(t.id, 'BLOQUEADA')}
+                  className="flex-1 bg-white border border-border rounded-xl py-2.5 items-center"
                 >
-                  <Text style={styles.btnSecText}>Bloquear</Text>
+                  <Text className="text-ink font-semibold text-xs">Bloquear</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -243,37 +252,3 @@ export default function SuperAdminScreen({ onShowToast }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  topTitle: { fontSize: 19, fontWeight: '800', color: colors.text },
-  logoutBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: colors.bg },
-  logoutText: { color: colors.danger, fontWeight: '700', fontSize: 13 },
-  tabRow: { flexDirection: 'row', padding: 12, gap: 8 },
-  tabBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  tabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  tabText: { fontWeight: '700', color: colors.text, fontSize: 13 },
-  tabTextActive: { color: '#FFF' },
-  container: { padding: 16, paddingBottom: 32 },
-  name: { fontSize: 16, fontWeight: '700', color: colors.text },
-  meta: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  btnPriText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
-  btnSecText: { color: colors.text, fontWeight: '600', fontSize: 13 },
-});

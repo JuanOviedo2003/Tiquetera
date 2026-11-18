@@ -4,15 +4,18 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { colors, commonStyles } from '../theme/colors';
 import { getApiBaseUrl } from '../services/api';
 
-export default function LoginScreen({ onGoClienteActivar, onGoClienteConsulta, onOpenServerConfig, onShowToast }) {
+export default function LoginScreen({
+  onGoClienteActivar,
+  onGoClienteConsulta,
+  onOpenServerConfig,
+  onShowToast,
+}) {
   const { login, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,98 +34,79 @@ export default function LoginScreen({ onGoClienteActivar, onGoClienteConsulta, o
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.brand}>
-        <View style={styles.logoBadge}>
-          <Text style={styles.logoText}>T</Text>
+    <ScrollView
+      contentContainerClassName="flex-grow p-5 justify-center bg-bg"
+      keyboardShouldPersistTaps="handled"
+    >
+      <View className="items-center mb-6">
+        <View className="w-14 h-14 rounded-2xl bg-primary items-center justify-center mb-2.5">
+          <Text className="text-white text-3xl font-extrabold">T</Text>
         </View>
-        <Text style={styles.title}>Tiquetera</Text>
-        <Text style={styles.subtitle}>Control de almuerzos · App Móvil</Text>
+        <Text className="text-2xl font-extrabold text-ink">Tiquetera</Text>
+        <Text className="text-xs text-muted mt-0.5">Control de almuerzos · App Móvil</Text>
       </View>
 
-      <View style={commonStyles.card}>
-        <Text style={styles.cardTitle}>Acceso Restaurante / Admin</Text>
-        <Text style={styles.label}>Correo electrónico</Text>
+      <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+        <Text className="text-base font-bold text-ink mb-3">Acceso Restaurante / Admin</Text>
+        <Text className="text-xs font-semibold text-ink mb-1.5">Correo electrónico</Text>
         <TextInput
           value={email}
           onChangeText={setEmail}
           placeholder="restaurante@ejemplo.com"
           keyboardType="email-address"
           autoCapitalize="none"
-          style={[commonStyles.input, { marginBottom: 12 }]}
+          className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-3"
         />
-        <Text style={styles.label}>Contraseña</Text>
+        <Text className="text-xs font-semibold text-ink mb-1.5">Contraseña</Text>
         <TextInput
           value={password}
           onChangeText={setPassword}
           placeholder="••••••••"
           secureTextEntry
-          style={[commonStyles.input, { marginBottom: 16 }]}
+          className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-4"
         />
         <TouchableOpacity
-          style={commonStyles.buttonPrimary}
           onPress={handleSubmit}
           disabled={loading}
+          className="bg-primary rounded-xl py-3.5 items-center justify-center"
         >
           {loading ? (
             <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={styles.btnPrimaryText}>Iniciar sesión</Text>
+            <Text className="text-white font-bold text-sm">Iniciar sesión</Text>
           )}
         </TouchableOpacity>
       </View>
 
-      <View style={commonStyles.card}>
-        <Text style={styles.cardTitle}>Soy Cliente</Text>
-        <Text style={styles.helper}>
+      <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+        <Text className="text-base font-bold text-ink mb-1.5">Soy Cliente</Text>
+        <Text className="text-xs text-muted mb-3">
           Activa tu tiquetera con el código de 6 dígitos o consulta tu saldo y movimientos con tu QR.
         </Text>
-        <View style={styles.clientActions}>
+        <View className="flex-row gap-2.5">
           <TouchableOpacity
-            style={[commonStyles.buttonSecondary, { flex: 1 }]}
             onPress={onGoClienteActivar}
+            className="flex-1 bg-white border border-border rounded-xl py-3 items-center"
           >
-            <Text style={styles.btnSecText}>Activar código</Text>
+            <Text className="text-ink font-bold text-xs">Activar código</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[commonStyles.buttonSecondary, { flex: 1 }]}
             onPress={onGoClienteConsulta}
+            className="flex-1 bg-white border border-border rounded-xl py-3 items-center"
           >
-            <Text style={styles.btnSecText}>Consultar QR</Text>
+            <Text className="text-ink font-bold text-xs">Consultar QR</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.serverLink} onPress={onOpenServerConfig}>
-        <Text style={styles.serverLinkText}>Servidor API: {getApiBaseUrl()}</Text>
-        <Text style={styles.serverLinkSub}>Toca para cambiar o probar conexión</Text>
+      <TouchableOpacity onPress={onOpenServerConfig} className="items-center mt-2 p-2">
+        <Text className="text-xs text-muted font-semibold">
+          Servidor API: {getApiBaseUrl()}
+        </Text>
+        <Text className="text-[11px] text-primary mt-0.5">
+          Toca para cambiar o probar conexión
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, justifyContent: 'center', backgroundColor: colors.bg },
-  brand: { alignItems: 'center', marginBottom: 24 },
-  logoBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  logoText: { color: '#FFFFFF', fontSize: 28, fontWeight: '800' },
-  title: { fontSize: 26, fontWeight: '800', color: colors.text },
-  subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  cardTitle: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
-  helper: { fontSize: 13, color: colors.textMuted, marginBottom: 12 },
-  btnPrimaryText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
-  clientActions: { flexDirection: 'row', gap: 10 },
-  btnSecText: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  serverLink: { alignItems: 'center', marginTop: 8, padding: 8 },
-  serverLinkText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
-  serverLinkSub: { fontSize: 11, color: colors.primary, marginTop: 2 },
-});

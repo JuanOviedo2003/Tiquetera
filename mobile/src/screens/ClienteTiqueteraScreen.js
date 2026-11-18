@@ -5,12 +5,10 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { api } from '../services/api';
-import { colors, commonStyles } from '../theme/colors';
 import { extractQrToken } from '../utils/qr';
 import QrScannerModal from '../components/QrScannerModal';
 import RejillaGrid from '../components/RejillaGrid';
@@ -22,29 +20,31 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
 
-  // Regenerar PIN
   const [showPinForm, setShowPinForm] = useState(false);
   const [pinAnterior, setPinAnterior] = useState('');
   const [nuevoPin, setNuevoPin] = useState('');
   const [savingPin, setSavingPin] = useState(false);
 
-  const cargarTiquetera = useCallback(async (rawToken) => {
-    const clean = extractQrToken(rawToken);
-    if (!clean) {
-      onShowToast?.({ type: 'error', message: 'Ingresa o escanea un código QR válido' });
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await api.getVistaPublica(clean);
-      setData(res);
-      setTokenInput(clean);
-    } catch (err) {
-      onShowToast?.({ type: 'error', message: err.message || 'No se encontró la tiquetera' });
-    } finally {
-      setLoading(false);
-    }
-  }, [onShowToast]);
+  const cargarTiquetera = useCallback(
+    async (rawToken) => {
+      const clean = extractQrToken(rawToken);
+      if (!clean) {
+        onShowToast?.({ type: 'error', message: 'Ingresa o escanea un código QR válido' });
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await api.getVistaPublica(clean);
+        setData(res);
+        setTokenInput(clean);
+      } catch (err) {
+        onShowToast?.({ type: 'error', message: err.message || 'No se encontró la tiquetera' });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [onShowToast]
+  );
 
   useEffect(() => {
     if (initialQrToken) {
@@ -80,65 +80,74 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
   const movimientos = data?.movimientos || data?.historial || [];
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-        <Text style={styles.backText}>← Volver</Text>
+    <ScrollView
+      contentContainerClassName="flex-grow p-5 bg-bg"
+      keyboardShouldPersistTaps="handled"
+    >
+      <TouchableOpacity onPress={onBack} className="mb-3">
+        <Text className="text-primary font-bold text-sm">← Volver</Text>
       </TouchableOpacity>
 
-      <Text style={styles.title}>Mi Tiquetera</Text>
-      <Text style={styles.subtitle}>Consulta tu saldo, QR e historial de almuerzos.</Text>
+      <Text className="text-2xl font-extrabold text-ink">Mi Tiquetera</Text>
+      <Text className="text-xs text-muted mt-1 mb-4">
+        Consulta tu saldo, QR e historial de almuerzos.
+      </Text>
 
-      <View style={commonStyles.card}>
-        <Text style={styles.label}>Token o URL del QR</Text>
+      <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+        <Text className="text-xs font-semibold text-ink mb-1.5">Token o URL del QR</Text>
         <TextInput
           value={tokenInput}
           onChangeText={setTokenInput}
           placeholder="Pega el token QR o escanéalo"
           autoCapitalize="none"
-          style={[commonStyles.input, { marginBottom: 10 }]}
+          className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
         />
-        <View style={styles.row}>
+        <View className="flex-row gap-2.5">
           <TouchableOpacity
-            style={[commonStyles.buttonSecondary, { flex: 1 }]}
             onPress={() => setScannerOpen(true)}
+            className="flex-1 bg-white border border-border rounded-xl py-3 items-center"
           >
-            <Text style={styles.btnSecText}>Escanear QR</Text>
+            <Text className="text-ink font-bold text-xs">Escanear QR</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[commonStyles.buttonPrimary, { flex: 1 }]}
             onPress={() => cargarTiquetera(tokenInput)}
             disabled={loading}
+            className="flex-1 bg-primary rounded-xl py-3 items-center"
           >
-            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnPriText}>Consultar</Text>}
+            {loading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <Text className="text-white font-bold text-xs">Consultar</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
       {tiquetera && tiquetera.qr_token ? (
         <>
-          <View style={[commonStyles.card, { alignItems: 'center' }]}>
-            <Text style={styles.clientName}>
+          <View className="bg-white rounded-2xl border border-border p-4 mb-3 items-center">
+            <Text className="text-lg font-extrabold text-ink">
               {tiquetera.cliente?.nombre || tiquetera.cliente_nombre || 'Cliente'}
             </Text>
-            <Text style={styles.balance}>
+            <Text className="text-sm font-bold text-primary mt-1 mb-3.5">
               {tiquetera.disponibles ?? 0} / {tiquetera.total_almuerzos ?? 0} almuerzos disponibles
             </Text>
-            <View style={styles.qrWrap}>
+            <View className="p-3 bg-white rounded-xl border border-border">
               <QRCode value={tiquetera.qr_token} size={150} />
             </View>
             <TouchableOpacity
-              style={[commonStyles.buttonSecondary, { width: '100%', marginTop: 12 }]}
               onPress={() => setShowPinForm((v) => !v)}
+              className="w-full bg-white border border-border rounded-xl py-3 items-center mt-3"
             >
-              <Text style={styles.btnSecText}>
+              <Text className="text-ink font-bold text-xs">
                 {showPinForm ? 'Cancelar cambio de PIN' : 'Cambiar mi PIN'}
               </Text>
             </TouchableOpacity>
           </View>
 
           {showPinForm && (
-            <View style={commonStyles.card}>
-              <Text style={styles.sectionTitle}>Cambiar PIN</Text>
+            <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+              <Text className="text-base font-bold text-ink mb-2.5">Cambiar PIN</Text>
               <TextInput
                 value={pinAnterior}
                 onChangeText={setPinAnterior}
@@ -146,7 +155,7 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
                 keyboardType="number-pad"
                 secureTextEntry
                 maxLength={6}
-                style={[commonStyles.input, { marginBottom: 10 }]}
+                className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
               />
               <TextInput
                 value={nuevoPin}
@@ -155,25 +164,29 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
                 keyboardType="number-pad"
                 secureTextEntry
                 maxLength={6}
-                style={[commonStyles.input, { marginBottom: 12 }]}
+                className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-3"
               />
               <TouchableOpacity
-                style={commonStyles.buttonPrimary}
                 onPress={handleRegenerarPin}
                 disabled={savingPin}
+                className="bg-primary rounded-xl py-3 items-center"
               >
-                {savingPin ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnPriText}>Guardar nuevo PIN</Text>}
+                {savingPin ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text className="text-white font-bold text-xs">Guardar nuevo PIN</Text>
+                )}
               </TouchableOpacity>
             </View>
           )}
 
-          <View style={commonStyles.card}>
-            <Text style={styles.sectionTitle}>Rejilla de almuerzos</Text>
+          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+            <Text className="text-base font-bold text-ink mb-2.5">Rejilla de almuerzos</Text>
             <RejillaGrid cuadros={rejilla} readOnly />
           </View>
 
-          <View style={commonStyles.card}>
-            <Text style={styles.sectionTitle}>Historial de movimientos</Text>
+          <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+            <Text className="text-base font-bold text-ink mb-2.5">Historial de movimientos</Text>
             <HistorialMovimientos movimientos={movimientos} />
           </View>
         </>
@@ -187,19 +200,3 @@ export default function ClienteTiqueteraScreen({ initialQrToken = '', onBack, on
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, backgroundColor: colors.bg },
-  backBtn: { marginBottom: 12 },
-  backText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
-  title: { fontSize: 24, fontWeight: '800', color: colors.text },
-  subtitle: { fontSize: 13, color: colors.textMuted, marginBottom: 16, marginTop: 4 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
-  row: { flexDirection: 'row', gap: 10 },
-  btnSecText: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  btnPriText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
-  clientName: { fontSize: 18, fontWeight: '800', color: colors.text },
-  balance: { fontSize: 15, fontWeight: '700', color: colors.primary, marginTop: 4, marginBottom: 14 },
-  qrWrap: { padding: 12, backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: colors.border },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 10 },
-});

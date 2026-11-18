@@ -5,13 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { colors, commonStyles } from '../theme/colors';
 
 export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
   const { restauranteId } = useAuth();
@@ -21,7 +19,6 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
   const [filtroEstado, setFiltroEstado] = useState('');
   const [busqueda, setBusqueda] = useState('');
 
-  // Crear tiquetera
   const [showCreate, setShowCreate] = useState(false);
   const [clienteId, setClienteId] = useState('');
   const [totalAlmuerzos, setTotalAlmuerzos] = useState('10');
@@ -110,32 +107,38 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Tiqueteras</Text>
+    <ScrollView contentContainerClassName="p-4 pb-8" keyboardShouldPersistTaps="handled">
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="text-xl font-extrabold text-ink">Tiqueteras</Text>
         <TouchableOpacity
-          style={styles.newBtn}
           onPress={() => setShowCreate((v) => !v)}
+          className="bg-primary px-3.5 py-2 rounded-xl"
         >
-          <Text style={styles.newBtnText}>{showCreate ? 'Cerrar' : '+ Nueva'}</Text>
+          <Text className="text-white font-bold text-xs">
+            {showCreate ? 'Cerrar' : '+ Nueva'}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {showCreate && (
-        <View style={commonStyles.card}>
-          <Text style={styles.cardTitle}>Crear Tiquetera</Text>
-          <Text style={styles.label}>Cliente</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View className="bg-white rounded-2xl border border-border p-4 mb-3">
+          <Text className="text-base font-bold text-ink mb-2.5">Crear Tiquetera</Text>
+          <Text className="text-xs font-semibold text-ink mb-1.5">Cliente</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2.5">
+            <View className="flex-row gap-2">
               {clientes.map((c) => {
                 const active = String(c.id) === String(clienteId);
                 return (
                   <TouchableOpacity
                     key={String(c.id)}
                     onPress={() => setClienteId(String(c.id))}
-                    style={[styles.chip, active && styles.chipActive]}
+                    className={`px-3 py-1.5 rounded-full border ${
+                      active ? 'bg-primary border-primary' : 'bg-bg border-border'
+                    }`}
                   >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                    <Text
+                      className={`text-xs font-semibold ${active ? 'text-white' : 'text-ink'}`}
+                    >
                       {c.nombre}
                     </Text>
                   </TouchableOpacity>
@@ -144,44 +147,46 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
             </View>
           </ScrollView>
 
-          <Text style={styles.label}>Cantidad de almuerzos</Text>
+          <Text className="text-xs font-semibold text-ink mb-1.5">Cantidad de almuerzos</Text>
           <TextInput
             value={totalAlmuerzos}
             onChangeText={setTotalAlmuerzos}
             keyboardType="number-pad"
-            style={[commonStyles.input, { marginBottom: 12 }]}
+            className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-3"
           />
           <TouchableOpacity
-            style={commonStyles.buttonPrimary}
             onPress={handleCrear}
             disabled={creating}
+            className="bg-primary rounded-xl py-3 items-center"
           >
             {creating ? (
               <ActivityIndicator color="#FFF" />
             ) : (
-              <Text style={styles.btnPriText}>Emitir Tiquetera</Text>
+              <Text className="text-white font-bold text-xs">Emitir Tiquetera</Text>
             )}
           </TouchableOpacity>
         </View>
       )}
 
-      <View style={commonStyles.card}>
+      <View className="bg-white rounded-2xl border border-border p-4 mb-3">
         <TextInput
           value={busqueda}
           onChangeText={setBusqueda}
           placeholder="Buscar por nombre de cliente..."
-          style={[commonStyles.input, { marginBottom: 10 }]}
+          className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-2.5"
         />
-        <View style={styles.filterRow}>
+        <View className="flex-row flex-wrap gap-1.5">
           {['', 'PENDIENTE', 'ACTIVA', 'AGOTADA'].map((est) => {
             const active = filtroEstado === est;
             return (
               <TouchableOpacity
                 key={est || 'TODAS'}
                 onPress={() => setFiltroEstado(est)}
-                style={[styles.chip, active && styles.chipActive]}
+                className={`px-3 py-1.5 rounded-full border ${
+                  active ? 'bg-primary border-primary' : 'bg-bg border-border'
+                }`}
               >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                <Text className={`text-xs font-semibold ${active ? 'text-white' : 'text-ink'}`}>
                   {est || 'Todas'}
                 </Text>
               </TouchableOpacity>
@@ -191,48 +196,49 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
+        <ActivityIndicator color="#FF6B47" className="mt-5" />
       ) : tiqueteras.length === 0 ? (
-        <Text style={styles.empty}>No hay tiqueteras con estos filtros.</Text>
+        <Text className="text-center text-muted mt-6">No hay tiqueteras con estos filtros.</Text>
       ) : (
         tiqueteras.map((t) => (
-          <View key={String(t.id)} style={commonStyles.card}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.clientName}>
+          <View key={String(t.id)} className="bg-white rounded-2xl border border-border p-4 mb-3">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-base font-bold text-ink">
                 {t.cliente?.nombre || t.cliente_nombre || `Cliente #${t.cliente_id}`}
               </Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{t.estado}</Text>
+              <View className="bg-primary-light px-2.5 py-1 rounded-lg">
+                <Text className="text-primary text-[11px] font-bold">{t.estado}</Text>
               </View>
             </View>
-            <Text style={styles.meta}>
-              Disponibles: <Text style={styles.bold}>{t.disponibles}</Text> / {t.total_almuerzos}
+            <Text className="text-xs text-muted mt-1.5">
+              Disponibles: <Text className="font-bold text-ink">{t.disponibles}</Text> /{' '}
+              {t.total_almuerzos}
             </Text>
 
-            <View style={styles.actionsRow}>
+            <View className="flex-row gap-2 mt-3">
               {t.estado === 'PENDIENTE' ? (
                 <>
                   <TouchableOpacity
-                    style={[commonStyles.buttonSecondary, { flex: 1 }]}
                     onPress={() => handleVerCodigo(t.id)}
+                    className="flex-1 bg-white border border-border rounded-xl py-2.5 items-center"
                   >
-                    <Text style={styles.btnSecText}>Ver código</Text>
+                    <Text className="text-ink font-semibold text-xs">Ver código</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[commonStyles.buttonSecondary, { flex: 1 }]}
                     onPress={() => handleReemitir(t.id)}
+                    className="flex-1 bg-white border border-border rounded-xl py-2.5 items-center"
                   >
-                    <Text style={styles.btnSecText}>Reemitir</Text>
+                    <Text className="text-ink font-semibold text-xs">Reemitir</Text>
                   </TouchableOpacity>
                 </>
               ) : null}
 
               {t.estado === 'ACTIVA' && t.qr_token ? (
                 <TouchableOpacity
-                  style={[commonStyles.buttonPrimary, { flex: 1 }]}
                   onPress={() => onAbrirConsumo(t.qr_token)}
+                  className="flex-1 bg-primary rounded-xl py-2.5 items-center"
                 >
-                  <Text style={styles.btnPriText}>Registrar consumo</Text>
+                  <Text className="text-white font-bold text-xs">Registrar consumo</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -242,35 +248,3 @@ export default function TiqueterasScreen({ onAbrirConsumo, onShowToast }) {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 32 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text },
-  newBtn: { backgroundColor: colors.primary, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
-  newBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 10 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.text, marginBottom: 6 },
-  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.bg,
-  },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: 12, fontWeight: '600', color: colors.text },
-  chipTextActive: { color: '#FFFFFF' },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  clientName: { fontSize: 16, fontWeight: '700', color: colors.text },
-  badge: { backgroundColor: colors.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  badgeText: { color: colors.primary, fontSize: 11, fontWeight: '700' },
-  meta: { fontSize: 13, color: colors.textMuted, marginTop: 6 },
-  bold: { fontWeight: '700', color: colors.text },
-  actionsRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  btnPriText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
-  btnSecText: { color: colors.text, fontWeight: '600', fontSize: 13 },
-  empty: { textAlign: 'center', color: colors.textMuted, marginTop: 24 },
-});

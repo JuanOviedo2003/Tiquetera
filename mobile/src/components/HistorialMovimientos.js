@@ -24,14 +24,12 @@ export default function HistorialMovimientos({ movimientos = [] }) {
           >
             <View className="flex-row justify-between items-center mb-1">
               <View
-                className={`px-2 py-0.5 rounded-lg ${
-                  isReversa ? 'bg-amber-100' : 'bg-primary-light'
-                }`}
+                className={`px-2 py-0.5 rounded-lg ${isReversa ? 'bg-amber-100' : 'bg-primary-light'
+                  }`}
               >
                 <Text
-                  className={`text-[11px] font-bold ${
-                    isReversa ? 'text-amber-700' : 'text-primary'
-                  }`}
+                  className={`text-[11px] font-bold ${isReversa ? 'text-amber-700' : 'text-primary'
+                    }`}
                 >
                   {mov.tipo || 'CONSUMO'}
                 </Text>
