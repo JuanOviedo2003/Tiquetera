@@ -25,7 +25,7 @@ allprojects {
 subprojects { sub ->
   sub.afterEvaluate {
     def androidExt = sub.extensions.findByName('android')
-    if (androidExt != null && sub.name == 'react-native-worklets') {
+    if (androidExt != null && sub.name != 'app' && androidExt.externalNativeBuild.cmake.path != null) {
       androidExt.externalNativeBuild.cmake.buildStagingDirectory = new File("C:/b/${sub.name}")
     }
   }
