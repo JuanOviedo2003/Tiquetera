@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { colors, commonStyles } from '../theme/colors';
+import { Modal, View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { api, getApiBaseUrl, setApiBaseUrl } from '../services/api';
 
 export default function ServerConfigModal({ visible, onClose, onSaved }) {
@@ -32,10 +31,10 @@ export default function ServerConfigModal({ visible, onClose, onSaved }) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <Text style={styles.title}>URL del Backend (API)</Text>
-          <Text style={styles.subtitle}>
+      <View className="flex-1 bg-black/45 justify-center p-5">
+        <View className="bg-white rounded-2xl p-5 border border-border">
+          <Text className="text-lg font-bold text-ink mb-1.5">URL del Backend (API)</Text>
+          <Text className="text-xs text-muted mb-3.5">
             Apunta al backend desplegado en dev o a tu IP local (ej. http://192.168.1.50:3001/api).
           </Text>
           <TextInput
@@ -44,22 +43,27 @@ export default function ServerConfigModal({ visible, onClose, onSaved }) {
             autoCapitalize="none"
             autoCorrect={false}
             placeholder="http://equipo-1-eleV-n-dev.apolobyte.online/api"
-            style={[commonStyles.input, { marginBottom: 12 }]}
+            className="bg-bg border border-border rounded-xl px-3.5 py-2.5 text-sm text-ink mb-3"
           />
-          {statusMsg ? <Text style={styles.status}>{statusMsg}</Text> : null}
-          <View style={styles.actions}>
-            <TouchableOpacity style={[commonStyles.buttonSecondary, { flex: 1 }]} onPress={onClose}>
-              <Text style={styles.btnSecText}>Cerrar</Text>
+          {statusMsg ? (
+            <Text className="text-xs text-ink font-semibold mb-3">{statusMsg}</Text>
+          ) : null}
+          <View className="flex-row gap-2.5">
+            <TouchableOpacity
+              onPress={onClose}
+              className="flex-1 bg-white border border-border rounded-xl py-3 items-center"
+            >
+              <Text className="text-ink font-semibold">Cerrar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[commonStyles.buttonPrimary, { flex: 1 }]}
               onPress={handleSaveAndTest}
               disabled={testing}
+              className="flex-1 bg-primary rounded-xl py-3 items-center"
             >
               {testing ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.btnPriText}>Guardar y Probar</Text>
+                <Text className="text-white font-bold">Guardar y Probar</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -68,25 +72,3 @@ export default function ServerConfigModal({ visible, onClose, onSaved }) {
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  title: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 6 },
-  subtitle: { fontSize: 13, color: colors.textMuted, marginBottom: 14 },
-  status: { fontSize: 12, color: colors.text, marginBottom: 12, fontWeight: '600' },
-  actions: { flexDirection: 'row', gap: 10 },
-  btnSecText: { color: colors.text, fontWeight: '600' },
-  btnPriText: { color: '#FFFFFF', fontWeight: '700' },
-});

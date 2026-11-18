@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { View, Text, TouchableOpacity } from 'react-native';
 
 export default function RejillaGrid({
   cuadros = [],
@@ -11,16 +10,36 @@ export default function RejillaGrid({
 }) {
   if (!cuadros.length) {
     return (
-      <Text style={styles.empty}>No hay cuadros de rejilla disponibles.</Text>
+      <Text className="text-muted text-xs text-center py-3">
+        No hay cuadros de rejilla disponibles.
+      </Text>
     );
   }
 
   return (
-    <View style={styles.grid}>
+    <View className="flex-row flex-wrap gap-2">
       {cuadros.map((item) => {
         const num = item.numero ?? item.cuadro ?? item.index;
         const isConsumed = item.estado === 'CONSUMIDO' || item.consumido === true;
         const isSelected = selected.includes(num);
+
+        const cellClass = isSelected
+          ? 'bg-primary border-primary'
+          : isConsumed
+          ? 'bg-gray-200 border-slate-300'
+          : 'bg-white border-border';
+
+        const textClass = isSelected
+          ? 'text-white'
+          : isConsumed
+          ? 'text-slate-500'
+          : 'text-ink';
+
+        const subClass = isSelected
+          ? 'text-white'
+          : isConsumed
+          ? 'text-slate-500'
+          : 'text-muted';
 
         return (
           <TouchableOpacity
@@ -35,28 +54,10 @@ export default function RejillaGrid({
                 onToggleSelect?.(num);
               }
             }}
-            style={[
-              styles.cell,
-              isConsumed && styles.cellConsumed,
-              isSelected && styles.cellSelected,
-            ]}
+            className={`w-[18%] min-w-[54px] aspect-square rounded-xl border-2 items-center justify-center p-1 ${cellClass}`}
           >
-            <Text
-              style={[
-                styles.cellText,
-                isConsumed && styles.cellTextConsumed,
-                isSelected && styles.cellTextSelected,
-              ]}
-            >
-              {num}
-            </Text>
-            <Text
-              style={[
-                styles.cellSub,
-                isConsumed && styles.cellTextConsumed,
-                isSelected && styles.cellTextSelected,
-              ]}
-            >
+            <Text className={`text-sm font-bold ${textClass}`}>{num}</Text>
+            <Text className={`text-[10px] mt-0.5 ${subClass}`}>
               {isConsumed ? 'Usado' : isSelected ? 'Selec.' : 'Libre'}
             </Text>
           </TouchableOpacity>
@@ -65,36 +66,3 @@ export default function RejillaGrid({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  cell: {
-    width: '18%',
-    minWidth: 54,
-    aspectRatio: 1,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 4,
-  },
-  cellConsumed: {
-    backgroundColor: '#E5E7EB',
-    borderColor: '#CBD5E1',
-  },
-  cellSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  cellText: { fontSize: 15, fontWeight: '700', color: colors.text },
-  cellSub: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
-  cellTextConsumed: { color: '#64748B' },
-  cellTextSelected: { color: '#FFFFFF' },
-  empty: { color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 12 },
-});

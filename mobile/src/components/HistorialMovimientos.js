@@ -1,72 +1,53 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { View, Text } from 'react-native';
 
 export default function HistorialMovimientos({ movimientos = [] }) {
   if (!movimientos.length) {
     return (
-      <Text style={styles.empty}>Aún no hay movimientos registrados.</Text>
+      <Text className="text-muted text-xs text-center py-3">
+        Aún no hay movimientos registrados.
+      </Text>
     );
   }
 
   return (
-    <View style={styles.list}>
+    <View className="gap-2">
       {movimientos.map((mov, idx) => {
         const isReversa = mov.tipo === 'REVERSA';
         const fecha = mov.created_at || mov.fecha || mov.createdAt;
         const fechaStr = fecha ? new Date(fecha).toLocaleString('es-CO') : '';
 
         return (
-          <View key={mov.id || String(idx)} style={styles.item}>
-            <View style={styles.rowBetween}>
+          <View
+            key={mov.id || String(idx)}
+            className="bg-bg rounded-xl border border-border p-3"
+          >
+            <View className="flex-row justify-between items-center mb-1">
               <View
-                style={[
-                  styles.badge,
-                  isReversa ? styles.badgeReversa : styles.badgeConsumo,
-                ]}
+                className={`px-2 py-0.5 rounded-lg ${
+                  isReversa ? 'bg-amber-100' : 'bg-primary-light'
+                }`}
               >
                 <Text
-                  style={[
-                    styles.badgeText,
-                    isReversa ? styles.textReversa : styles.textConsumo,
-                  ]}
+                  className={`text-[11px] font-bold ${
+                    isReversa ? 'text-amber-700' : 'text-primary'
+                  }`}
                 >
                   {mov.tipo || 'CONSUMO'}
                 </Text>
               </View>
-              <Text style={styles.date}>{fechaStr}</Text>
+              <Text className="text-[11px] text-muted">{fechaStr}</Text>
             </View>
-            <Text style={styles.detail}>
-              Cantidad: <Text style={styles.bold}>{mov.cantidad}</Text> · Saldo:{' '}
-              {mov.saldo_anterior} → <Text style={styles.bold}>{mov.saldo_posterior}</Text>
+            <Text className="text-xs text-ink">
+              Cantidad: <Text className="font-bold">{mov.cantidad}</Text> · Saldo:{' '}
+              {mov.saldo_anterior} → <Text className="font-bold">{mov.saldo_posterior}</Text>
             </Text>
-            {mov.motivo ? <Text style={styles.motivo}>Motivo: {mov.motivo}</Text> : null}
+            {mov.motivo ? (
+              <Text className="text-xs text-muted mt-1">Motivo: {mov.motivo}</Text>
+            ) : null}
           </View>
         );
       })}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  list: { gap: 8 },
-  item: {
-    backgroundColor: colors.bg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 12,
-  },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  badgeConsumo: { backgroundColor: colors.primaryLight },
-  badgeReversa: { backgroundColor: colors.warningBg },
-  badgeText: { fontSize: 11, fontWeight: '700' },
-  textConsumo: { color: colors.primary },
-  textReversa: { color: colors.warning },
-  date: { fontSize: 11, color: colors.textMuted },
-  detail: { fontSize: 13, color: colors.text },
-  bold: { fontWeight: '700' },
-  motivo: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
-  empty: { color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: 12 },
-});
